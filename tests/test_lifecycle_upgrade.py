@@ -1,3 +1,5 @@
+import os
+import stat
 import sys
 import tempfile
 import unittest
@@ -125,6 +127,33 @@ class UpgradeTests(unittest.TestCase):
 
         self.assertEqual(snapshot_tree(self.codex_home), before)
 
+    @unittest.skipIf(os.name == "nt", "POSIX mode is not available on Windows")
+    def test_upgrade_failure_restores_original_file_mode(self):
+        install(self.context, self.profile)
+        role = self.codex_home / "agents/model-economy-architect.toml"
+        role.chmod(0o640)
+        rendered = {
+            name: content + "# upgraded\n"
+            for name, content in render_all_agents(self.profile).items()
+        }
+        original_write = __import__(
+            "model_economy_lib.lifecycle", fromlist=["atomic_write"]
+        ).atomic_write
+
+        def fail_at_state(path: Path, content: bytes, **kwargs) -> None:
+            if path == self.context.state_path:
+                raise OSError("simulated state write failure")
+            original_write(path, content, **kwargs)
+
+        with (
+            patch("model_economy_lib.lifecycle.render_all_agents", return_value=rendered),
+            patch("model_economy_lib.lifecycle.atomic_write", side_effect=fail_at_state),
+            self.assertRaises(OSError),
+        ):
+            upgrade(self.context, force=True)
+
+        self.assertEqual(stat.S_IMODE(role.stat().st_mode), 0o640)
+
     def test_uninstall_with_modified_role_deletes_no_roles_without_force(self):
         install(self.context, self.profile)
         role = self.codex_home / "agents/model-economy-reviewer.toml"
@@ -226,6 +255,32 @@ class UpgradeTests(unittest.TestCase):
         install(self.context, self.profile)
         role = self.codex_home / "agents/model-economy-reviewer.toml"
         role.write_text(role.read_text(encoding="utf-8") + "\n# user change\n", encoding="utf-8")
+
+        result = uninstall(self.context, purge=True, force=True)
+
+        self.assertIn(role, result.removed)
+        self.assertFalse(role.exists())
+        self.assertFalse(self.context.config_path.exists())
+        self.assertFalse(self.context.state_path.exists())
+
+    def test_force_uninstall_without_state_removes_fixed_role_names(self):
+        install(self.context, self.profile)
+        role = self.codex_home / "agents/model-economy-reviewer.toml"
+        unrelated = self.codex_home / "agents/custom-role.toml"
+        unrelated.write_text("keep", encoding="utf-8")
+        self.context.state_path.unlink()
+
+        result = uninstall(self.context, force=True)
+
+        self.assertIn(role, result.removed)
+        self.assertFalse(role.exists())
+        self.assertTrue(unrelated.exists())
+        self.assertTrue(self.context.config_path.exists())
+
+    def test_force_purge_with_malformed_state_removes_fixed_roles_and_config(self):
+        install(self.context, self.profile)
+        role = self.codex_home / "agents/model-economy-reviewer.toml"
+        self.context.state_path.write_text("{not-json", encoding="utf-8")
 
         result = uninstall(self.context, purge=True, force=True)
 

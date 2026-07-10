@@ -1,7 +1,9 @@
 """Transactional installation of Model Economy agent definitions."""
 
 from dataclasses import dataclass, field
+import os
 from pathlib import Path
+import stat
 
 from .config import (
     ConfigError,
@@ -49,6 +51,12 @@ class ChangeSet:
     conflicts: list[Path] = field(default_factory=list)
 
 
+@dataclass(frozen=True)
+class _OriginalFile:
+    content: bytes | None
+    mode: int | None
+
+
 def _read_config(path: Path) -> LocalConfig | None:
     if not path.exists():
         return None
@@ -78,18 +86,25 @@ def _role_paths(context: Context) -> dict[str, Path]:
     return {f"{role.name}.toml": context.agents_dir / f"{role.name}.toml" for role in ROLES}
 
 
-def _restore(path: Path, original: bytes | None) -> None:
-    if original is None:
+def _snapshot(path: Path) -> _OriginalFile:
+    if not path.exists():
+        return _OriginalFile(None, None)
+    mode = None if os.name == "nt" else stat.S_IMODE(path.stat().st_mode)
+    return _OriginalFile(path.read_bytes(), mode)
+
+
+def _restore(path: Path, original: _OriginalFile) -> None:
+    if original.content is None:
         try:
             path.unlink()
         except FileNotFoundError:
             pass
         return
-    _write_path(path, original)
+    atomic_write(path, original.content, mode=original.mode)
 
 
 def _apply_transaction(operations: list[tuple[Path, bytes | None]]) -> None:
-    originals = {path: path.read_bytes() if path.exists() else None for path, _ in operations}
+    originals = {path: _snapshot(path) for path, _ in operations}
     completed: list[Path] = []
     try:
         for path, content in operations:

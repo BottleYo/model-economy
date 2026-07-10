@@ -12,7 +12,10 @@ from typing import Iterable, Sequence
 
 
 IGNORED_DIRS = {".git", "__pycache__", ".venv", ".superpowers"}
-TEXT_SUFFIXES = {".py", ".md", ".toml", ".json", ".yml", ".yaml", ".txt"}
+
+
+class GitScanError(RuntimeError):
+    """Raised when reachable Git history cannot be scanned completely."""
 
 
 @dataclass(frozen=True)
@@ -70,15 +73,16 @@ def scan_text(path: Path, text: str) -> list[Finding]:
 
 
 def scan(root: Path) -> list[Finding]:
-    """Scan public text files in the working tree, excluding generated state."""
+    """Scan every UTF-8 text file in the working tree, excluding generated state."""
     findings: list[Finding] = []
     for path in sorted(root.rglob("*")):
         if not path.is_file() or any(part in IGNORED_DIRS for part in path.parts):
             continue
-        if path.suffix.lower() not in TEXT_SUFFIXES:
+        content = path.read_bytes()
+        if b"\0" in content:
             continue
         try:
-            text = path.read_text(encoding="utf-8")
+            text = content.decode("utf-8")
         except UnicodeDecodeError:
             continue
         findings.extend(scan_text(path.relative_to(root), text))
@@ -86,16 +90,21 @@ def scan(root: Path) -> list[Finding]:
 
 
 def _git_output(root: Path, *args: str) -> str:
-    completed = subprocess.run(
-        ["git", "-C", str(root), *args],
-        check=False,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.DEVNULL,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-    )
-    return completed.stdout if completed.returncode == 0 else ""
+    try:
+        completed = subprocess.run(
+            ["git", "-C", str(root), *args],
+            check=False,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+    except OSError as exc:
+        raise GitScanError("Git command could not be started") from exc
+    if completed.returncode != 0:
+        raise GitScanError(f"Git command failed: {args[0] if args else 'unknown'}")
+    return completed.stdout
 
 
 def _reachable_revisions(root: Path) -> Iterable[str]:
@@ -109,6 +118,20 @@ def _tree_entries(root: Path, revision: str) -> Iterable[tuple[str, str]]:
         parts = metadata.split()
         if separator and len(parts) == 3 and parts[1] == "blob":
             yield parts[2], path
+
+
+def _annotated_tags(root: Path) -> Iterable[tuple[str, str]]:
+    output = _git_output(
+        root,
+        "for-each-ref",
+        "--format=%(objectname)%09%(objecttype)%09%(refname)",
+        "refs/tags",
+    )
+    for entry in output.splitlines():
+        object_name, separator, remainder = entry.partition("\t")
+        object_type, second_separator, refname = remainder.partition("\t")
+        if separator and second_separator and object_type == "tag":
+            yield object_name, refname
 
 
 def scan_git(root: Path) -> list[Finding]:
@@ -134,6 +157,15 @@ def scan_git(root: Path) -> list[Finding]:
             content = _git_output(root, "cat-file", "blob", blob)
             if "\0" not in content:
                 findings.extend(scan_text(git_path / "blobs" / blob, content))
+
+    for object_name, refname in _annotated_tags(root):
+        git_path = Path(".git") / "tags" / object_name
+        findings.extend(scan_text(git_path / "ref", refname))
+        content = _git_output(root, "cat-file", "tag", object_name)
+        findings.extend(scan_text(git_path / "object", content))
+        tagger = re.search(r"^tagger .* <([^>]+)>", content, re.MULTILINE)
+        if tagger and not tagger.group(1).endswith("@users.noreply.github.com"):
+            findings.append(Finding(git_path, 1, "git_tagger_email"))
     return findings
 
 
@@ -152,7 +184,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         print("扫描目标必须是目录。", file=sys.stderr)
         return 2
 
-    findings = [*scan(root), *scan_git(root)]
+    try:
+        findings = [*scan(root), *scan_git(root)]
+    except GitScanError:
+        print("敏感内容检查失败：Git 历史无法完整读取。", file=sys.stderr)
+        return 2
     if findings:
         print(format_findings(findings))
         return 1

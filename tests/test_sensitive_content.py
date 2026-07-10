@@ -103,6 +103,18 @@ class SensitiveContentTests(unittest.TestCase):
             (Path("visible.md"), 1, "persona_name"),
         ])
 
+    def test_scan_checks_all_utf8_text_regardless_of_suffix(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            expected = [Path(".env"), Path("CONFIG"), Path("deploy.sh"), Path("script.ps1")]
+            for path in expected:
+                (root / path).write_text(_private_project_name(), encoding="utf-8")
+            (root / "binary.bin").write_bytes(b"\x00" + _private_project_name().encode())
+
+            findings = scan(root)
+
+        self.assertEqual([finding.path for finding in findings], expected)
+
     def test_scan_does_not_report_its_own_source_or_test_fixtures(self):
         self.assertEqual(scan(ROOT), [])
 
@@ -123,6 +135,25 @@ class SensitiveContentTests(unittest.TestCase):
 
         rules = {finding.rule for finding in findings}
         self.assertTrue({"git_author_email", "git_committer_email", "private_project", "private_key"} <= rules)
+
+    def test_scan_git_fails_closed_when_target_is_not_a_repository(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaises(RuntimeError):
+                scan_git(Path(directory))
+
+    def test_scan_git_scans_annotated_tag_metadata_and_message(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            run(["git", "init", "-q"], cwd=root, check=True)
+            (root / "public.txt").write_text("public", encoding="utf-8")
+            run(["git", "add", "public.txt"], cwd=root, check=True)
+            identity = ["-c", "user.name=Fixture", "-c", "user.email=fixture@users.noreply.github.com"]
+            run(["git", *identity, "commit", "-qm", "public"], cwd=root, check=True)
+            run(["git", *identity, "tag", "-am", _private_project_name(), "v0.1.0"], cwd=root, check=True)
+
+            findings = scan_git(root)
+
+        self.assertIn("private_project", {finding.rule for finding in findings})
 
 
 if __name__ == "__main__":
