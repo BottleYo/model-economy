@@ -225,9 +225,9 @@ def _prepare_upgrade(
     return _prepare_install(context, profile, force)
 
 
-def plan_upgrade(context: Context) -> ChangeSet:
+def plan_upgrade(context: Context, force: bool = False) -> ChangeSet:
     """Return the upgrade changes without writing to the filesystem."""
-    changes, _ = _prepare_upgrade(context, force=False)
+    changes, _ = _prepare_upgrade(context, force)
     return changes
 
 

@@ -131,6 +131,17 @@ class CliTests(unittest.TestCase):
         code = main(["--codex-home", str(self.home), "upgrade", "--dry-run"])
         self.assertEqual(code, 2)
 
+    def test_upgrade_dry_run_force_previews_conflict_override_without_writing(self):
+        self.assertEqual(main(["--codex-home", str(self.home), "install", "--profile", "inherited"]), 0)
+        role = self.home / "agents" / "model-economy-reviewer.toml"
+        role.write_text(role.read_text(encoding="utf-8") + "\n# local change\n", encoding="utf-8")
+        before = role.read_bytes()
+
+        code = main(["--codex-home", str(self.home), "upgrade", "--dry-run", "--force"])
+
+        self.assertEqual(code, 0)
+        self.assertEqual(role.read_bytes(), before)
+
     def test_verify_returns_one_for_missing_installation(self):
         self.assertEqual(main(["--codex-home", str(self.home), "verify"]), 1)
 

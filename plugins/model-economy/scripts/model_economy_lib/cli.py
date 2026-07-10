@@ -161,7 +161,7 @@ def _run(args: argparse.Namespace) -> int:
             return SUCCESS if report.ok and smoke.subagent_started else ENVIRONMENT_FAILURE
         return SUCCESS if report.ok else ENVIRONMENT_FAILURE
     if args.command == "upgrade":
-        changes = plan_upgrade(context) if args.dry_run else upgrade(context, args.force)
+        changes = plan_upgrade(context, args.force) if args.dry_run else upgrade(context, args.force)
         if changes.conflicts:
             paths = ", ".join(str(path) for path in changes.conflicts)
             raise ConflictError(f"unmanaged paths: {paths}")
