@@ -1,0 +1,31 @@
+{
+  "name": "model-economy",
+  "version": "0.1.0",
+  "description": "为 Codex 开发任务选择最低可胜任模型角色的成本路由插件",
+  "author": {
+    "name": "Model Economy Contributors"
+  },
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "cost",
+    "routing",
+    "agents",
+    "superpowers"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Model Economy",
+    "shortDescription": "让强模型专注关键判断",
+    "longDescription": "通过稳定角色、可替换模型配置和受控 subagent 工作流降低开发额度消耗。",
+    "developerName": "Model Economy Contributors",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive"
+    ],
+    "defaultPrompt": [
+      "按成本感知流程处理这个开发任务。",
+      "评估这个任务应该使用哪个模型角色。"
+    ]
+  }
+}

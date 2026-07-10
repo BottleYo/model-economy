@@ -1,0 +1,7 @@
+name = "openai-56"
+inherit_model = false
+
+[models]
+strong = "gpt-5.6-sol"
+balanced = "gpt-5.6-terra"
+economy = "gpt-5.6-luna"

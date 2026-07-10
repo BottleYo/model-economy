@@ -1,0 +1,20 @@
+{
+  "name": "model-economy-public",
+  "interface": {
+    "displayName": "Model Economy Public"
+  },
+  "plugins": [
+    {
+      "name": "model-economy",
+      "source": {
+        "source": "local",
+        "path": "./plugins/model-economy"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

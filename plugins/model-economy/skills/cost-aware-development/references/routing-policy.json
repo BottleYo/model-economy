@@ -1,0 +1,209 @@
+{
+  "schema_version": 2,
+  "classification_order": [
+    "large_or_high_risk",
+    "mechanical",
+    "simple",
+    "standard"
+  ],
+  "match_semantics": "first_match",
+  "task_classes": {
+    "large_or_high_risk": {
+      "label": "大型/高风险",
+      "match": {
+        "operator": "any",
+        "predicates": ["high_risk", "new_architecture", "wide_blast_radius"]
+      },
+      "base_allowed_roles": [
+        "model-economy-implementer",
+        "model-economy-explorer"
+      ],
+      "conditional_roles": [],
+      "required_roles": [
+        {
+          "role": "model-economy-architect",
+          "when": "before_design_approval",
+          "must_complete_before": "design_approval"
+        },
+        {
+          "role": "model-economy-final-reviewer",
+          "when": "after_verification",
+          "must_complete_before": "task_completion"
+        }
+      ],
+      "forbidden_roles": [
+        "model-economy-reviewer",
+        "model-economy-batch-worker"
+      ],
+      "strong_max": 2
+    },
+    "mechanical": {
+      "label": "机械",
+      "match": {
+        "operator": "all",
+        "predicates": [
+          "deterministic_input_targets_and_rules",
+          "independent_retryable_operations",
+          "no_sensitive_or_high_risk_boundary",
+          "automated_check_per_result",
+          "bounded_explicit_failure"
+        ]
+      },
+      "base_allowed_roles": ["model-economy-batch-worker"],
+      "conditional_roles": [],
+      "required_roles": [],
+      "forbidden_roles": [
+        "model-economy-architect",
+        "model-economy-final-reviewer",
+        "model-economy-implementer",
+        "model-economy-reviewer",
+        "model-economy-explorer"
+      ],
+      "strong_max": 0
+    },
+    "simple": {
+      "label": "简单",
+      "match": {
+        "operator": "all",
+        "predicates": [
+          "known_files",
+          "no_open_judgment",
+          "directly_verifiable",
+          "not_creative_or_behavioral_change"
+        ]
+      },
+      "base_allowed_roles": [],
+      "conditional_roles": [],
+      "required_roles": [],
+      "forbidden_roles": [
+        "model-economy-architect",
+        "model-economy-final-reviewer",
+        "model-economy-implementer",
+        "model-economy-reviewer",
+        "model-economy-explorer",
+        "model-economy-batch-worker"
+      ],
+      "strong_max": 0
+    },
+    "standard": {
+      "label": "标准",
+      "match": {
+        "operator": "default",
+        "predicates": []
+      },
+      "base_allowed_roles": [
+        "model-economy-implementer",
+        "model-economy-reviewer",
+        "model-economy-explorer"
+      ],
+      "conditional_roles": [
+        {
+          "role": "model-economy-architect",
+          "when": {
+            "failed_attempts": {"gte": 2}
+          },
+          "max_calls": 1,
+          "output": "diagnostic_decision",
+          "after_completion": {
+            "implementation_capability": "balanced",
+            "reclassify_when": "large_or_high_risk_discovered"
+          }
+        }
+      ],
+      "required_roles": [],
+      "forbidden_roles": [
+        "model-economy-final-reviewer",
+        "model-economy-batch-worker"
+      ],
+      "strong_max": 1
+    }
+  },
+  "approval_gate": {
+    "required_for": ["creative_change", "behavior_change"],
+    "required_evidence": ["approved_design", "approval_evidence"],
+    "forbidden_without_evidence": ["planning", "implementation"],
+    "exceptions": {
+      "literal_change": "a text-only literal edit with no behavioral effect",
+      "mechanical_change_within_approved_spec": "a deterministic mechanical edit fully contained in an already approved specification"
+    }
+  },
+  "economy_conditions": [
+    {
+      "id": "deterministic_input_targets_and_rules",
+      "required": true
+    },
+    {
+      "id": "independent_retryable_operations",
+      "required": true
+    },
+    {
+      "id": "no_sensitive_or_high_risk_boundary",
+      "required": true
+    },
+    {
+      "id": "automated_check_per_result",
+      "required": true
+    },
+    {
+      "id": "bounded_explicit_failure",
+      "required": true
+    }
+  ],
+  "roles": {
+    "model-economy-architect": {
+      "capability": "strong",
+      "write_access": "read_only",
+      "allowed_outputs": ["architecture_boundaries", "risks", "decisions"],
+      "forbidden_outputs": ["plans", "patches", "code"]
+    },
+    "model-economy-final-reviewer": {
+      "capability": "strong",
+      "write_access": "read_only",
+      "allowed_outputs": ["findings", "evidence_gaps", "residual_risks"],
+      "forbidden_outputs": ["patches", "code"]
+    },
+    "model-economy-implementer": {
+      "capability": "balanced",
+      "write_access": "workspace_write",
+      "allowed_outputs": ["approved_scope_implementation", "tests", "verification"],
+      "forbidden_outputs": ["unapproved_design", "unapproved_plan"]
+    },
+    "model-economy-reviewer": {
+      "capability": "balanced",
+      "write_access": "read_only",
+      "allowed_outputs": ["findings", "regression_risks", "test_gaps"],
+      "forbidden_outputs": ["plans", "patches", "code"]
+    },
+    "model-economy-explorer": {
+      "capability": "economy",
+      "write_access": "read_only",
+      "allowed_outputs": ["file_inventory", "facts", "constraints"],
+      "forbidden_outputs": ["designs", "plans", "patches", "code"]
+    },
+    "model-economy-batch-worker": {
+      "capability": "economy",
+      "write_access": "workspace_write",
+      "allowed_outputs": ["fixed_rule_edits", "per_item_checks"],
+      "forbidden_outputs": ["designs", "plans", "semantic_judgment"]
+    }
+  },
+  "context_sanitization": {
+    "remove_before_sending": [
+      "secrets",
+      "tokens",
+      "personal_data",
+      "production_data",
+      "internal_urls",
+      "irrelevant_paths"
+    ],
+    "placeholder_format": "[REDACTED_<TYPE>]"
+  },
+  "delegation": {
+    "max_concurrent_subagents": 3,
+    "recursive_delegation": "forbidden",
+    "write_file_sets": {
+      "must_be_mutually_exclusive": true,
+      "overlap_handling": "main_agent_serializes"
+    }
+  }
+}
