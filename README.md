@@ -31,11 +31,11 @@ python plugins/model-economy/scripts/model_economy.py install --profile inherite
 # 2. openai-56：使用随插件提供的三档模型映射
 python plugins/model-economy/scripts/model_economy.py install --profile openai-56
 
-# 3. custom：显式提供 strong、balanced、economy 三个模型
-python plugins/model-economy/scripts/model_economy.py configure \
-  --strong <strong-model> \
-  --balanced <balanced-model> \
-  --economy <economy-model>
+# 3. custom：显式提供 strong、balanced、economy 三个模型（POSIX）
+python plugins/model-economy/scripts/model_economy.py configure --strong <strong-model> --balanced <balanced-model> --economy <economy-model>
+
+# PowerShell
+py -3.11 plugins/model-economy/scripts/model_economy.py configure --strong <strong-model> --balanced <balanced-model> --economy <economy-model>
 ```
 
 所有命令都可通过 `--codex-home <目录>` 指向另一套 Codex 配置目录；`--codex-bin <命令>` 用于 `doctor` 选择要诊断的 Codex 可执行文件。完整参数以 `python plugins/model-economy/scripts/model_economy.py --help` 为准。
