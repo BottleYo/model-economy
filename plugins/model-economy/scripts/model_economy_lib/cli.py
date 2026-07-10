@@ -9,7 +9,7 @@ from typing import Sequence
 from .config import ConfigError, export_profile, import_profile, load_config
 from .doctor import SmokeReport, run_doctor, run_smoke, verify_installation
 from .filesystem import resolve_codex_home
-from .lifecycle import ChangeSet, ConflictError, Context, install, uninstall, upgrade
+from .lifecycle import ChangeSet, ConflictError, Context, install, plan_upgrade, uninstall, upgrade
 from .models import Profile
 from .profiles import load_profile
 
@@ -67,6 +67,7 @@ def _build_parser() -> Parser:
     doctor_parser.add_argument("--smoke", action="store_true")
 
     upgrade_parser = command("upgrade")
+    upgrade_parser.add_argument("--dry-run", action="store_true")
     upgrade_parser.add_argument("--force", action="store_true")
 
     export_parser = command("export-profile")
@@ -160,7 +161,11 @@ def _run(args: argparse.Namespace) -> int:
             return SUCCESS if report.ok and smoke.subagent_started else ENVIRONMENT_FAILURE
         return SUCCESS if report.ok else ENVIRONMENT_FAILURE
     if args.command == "upgrade":
-        _print_changes(upgrade(context, args.force))
+        changes = plan_upgrade(context) if args.dry_run else upgrade(context, args.force)
+        if changes.conflicts:
+            paths = ", ".join(str(path) for path in changes.conflicts)
+            raise ConflictError(f"unmanaged paths: {paths}")
+        _print_changes(changes)
         return SUCCESS
     if args.command == "export-profile":
         export_profile(load_config(context.config_path), args.path)

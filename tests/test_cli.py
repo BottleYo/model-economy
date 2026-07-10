@@ -109,6 +109,23 @@ class CliTests(unittest.TestCase):
         self.assertEqual(main(["--codex-home", str(self.home), "uninstall", "--purge"]), 0)
         self.assertFalse((self.home / "model-economy" / "state.json").exists())
 
+    def test_upgrade_dry_run_reports_plan_without_writing(self):
+        self.assertEqual(main(["--codex-home", str(self.home), "install", "--profile", "inherited"]), 0)
+        state_path = self.home / "model-economy" / "state.json"
+        before = state_path.read_bytes()
+
+        output = StringIO()
+        with redirect_stdout(output):
+            code = main(["--codex-home", str(self.home), "upgrade", "--dry-run"])
+
+        self.assertEqual(code, 0)
+        self.assertEqual(before, state_path.read_bytes())
+        self.assertIn("完成：", output.getvalue())
+
+    def test_upgrade_dry_run_reports_conflict_for_missing_installation(self):
+        code = main(["--codex-home", str(self.home), "upgrade", "--dry-run"])
+        self.assertEqual(code, 2)
+
     def test_verify_returns_one_for_missing_installation(self):
         self.assertEqual(main(["--codex-home", str(self.home), "verify"]), 1)
 
