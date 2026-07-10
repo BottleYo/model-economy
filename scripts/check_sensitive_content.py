@@ -111,6 +111,10 @@ def _reachable_revisions(root: Path) -> Iterable[str]:
     return (revision for revision in _git_output(root, "rev-list", "--all").splitlines() if revision)
 
 
+def _has_git_marker(root: Path) -> bool:
+    return any((directory / ".git").exists() for directory in (root, *root.parents))
+
+
 def _tree_entries(root: Path, revision: str) -> Iterable[tuple[str, str]]:
     output = _git_output(root, "ls-tree", "-r", "-z", revision)
     for entry in output.split("\0"):
@@ -120,7 +124,7 @@ def _tree_entries(root: Path, revision: str) -> Iterable[tuple[str, str]]:
             yield parts[2], path
 
 
-def _annotated_tags(root: Path) -> Iterable[tuple[str, str]]:
+def _tag_refs(root: Path) -> Iterable[tuple[str, str, str]]:
     output = _git_output(
         root,
         "for-each-ref",
@@ -130,12 +134,36 @@ def _annotated_tags(root: Path) -> Iterable[tuple[str, str]]:
     for entry in output.splitlines():
         object_name, separator, remainder = entry.partition("\t")
         object_type, second_separator, refname = remainder.partition("\t")
-        if separator and second_separator and object_type == "tag":
-            yield object_name, refname
+        if separator and second_separator:
+            yield object_name, object_type, refname
+
+
+def _scan_tag_chain(root: Path, object_name: str, scanned: set[str]) -> list[Finding]:
+    findings: list[Finding] = []
+    current = object_name
+    while current not in scanned:
+        object_type = _git_output(root, "cat-file", "-t", current).strip()
+        if object_type != "tag":
+            break
+        scanned.add(current)
+        git_path = Path(".git") / "tags" / current
+        content = _git_output(root, "cat-file", "tag", current)
+        findings.extend(scan_text(git_path / "object", content))
+        tagger = re.search(r"^tagger .* <([^>]+)>", content, re.MULTILINE)
+        if tagger and not tagger.group(1).endswith("@users.noreply.github.com"):
+            findings.append(Finding(git_path, 1, "git_tagger_email"))
+        target = re.search(r"^object ([0-9a-f]+)$", content, re.MULTILINE)
+        if target is None:
+            raise GitScanError("Annotated tag is missing its target object")
+        current = target.group(1)
+    return findings
 
 
 def scan_git(root: Path) -> list[Finding]:
     """Scan reachable Git metadata, paths, messages, and text blobs without echoing them."""
+    if not _has_git_marker(root):
+        return []
+
     findings: list[Finding] = []
     scanned_blobs: set[str] = set()
     for revision in _reachable_revisions(root):
@@ -158,14 +186,12 @@ def scan_git(root: Path) -> list[Finding]:
             if "\0" not in content:
                 findings.extend(scan_text(git_path / "blobs" / blob, content))
 
-    for object_name, refname in _annotated_tags(root):
+    scanned_tags: set[str] = set()
+    for object_name, object_type, refname in _tag_refs(root):
         git_path = Path(".git") / "tags" / object_name
         findings.extend(scan_text(git_path / "ref", refname))
-        content = _git_output(root, "cat-file", "tag", object_name)
-        findings.extend(scan_text(git_path / "object", content))
-        tagger = re.search(r"^tagger .* <([^>]+)>", content, re.MULTILINE)
-        if tagger and not tagger.group(1).endswith("@users.noreply.github.com"):
-            findings.append(Finding(git_path, 1, "git_tagger_email"))
+        if object_type == "tag":
+            findings.extend(_scan_tag_chain(root, object_name, scanned_tags))
     return findings
 
 

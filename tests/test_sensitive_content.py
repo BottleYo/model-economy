@@ -2,7 +2,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
-from subprocess import run
+from subprocess import DEVNULL, run
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -136,10 +136,17 @@ class SensitiveContentTests(unittest.TestCase):
         rules = {finding.rule for finding in findings}
         self.assertTrue({"git_author_email", "git_committer_email", "private_project", "private_key"} <= rules)
 
-    def test_scan_git_fails_closed_when_target_is_not_a_repository(self):
+    def test_scan_git_returns_no_history_for_non_repository(self):
         with tempfile.TemporaryDirectory() as directory:
+            self.assertEqual(scan_git(Path(directory)), [])
+
+    def test_scan_git_fails_closed_when_git_marker_is_unreadable(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / ".git").mkdir()
+
             with self.assertRaises(RuntimeError):
-                scan_git(Path(directory))
+                scan_git(root)
 
     def test_scan_git_scans_annotated_tag_metadata_and_message(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -150,6 +157,41 @@ class SensitiveContentTests(unittest.TestCase):
             identity = ["-c", "user.name=Fixture", "-c", "user.email=fixture@users.noreply.github.com"]
             run(["git", *identity, "commit", "-qm", "public"], cwd=root, check=True)
             run(["git", *identity, "tag", "-am", _private_project_name(), "v0.1.0"], cwd=root, check=True)
+
+            findings = scan_git(root)
+
+        self.assertIn("private_project", {finding.rule for finding in findings})
+
+    def test_scan_git_scans_nested_annotated_tag_chain_without_inner_ref(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            run(["git", "init", "-q"], cwd=root, check=True)
+            (root / "public.txt").write_text("public", encoding="utf-8")
+            run(["git", "add", "public.txt"], cwd=root, check=True)
+            identity = ["-c", "user.name=Fixture", "-c", "user.email=fixture@users.noreply.github.com"]
+            run(["git", *identity, "commit", "-qm", "public"], cwd=root, check=True)
+            run(["git", *identity, "tag", "-am", _private_project_name(), "inner"], cwd=root, check=True)
+            run(
+                ["git", *identity, "tag", "-am", "public", "outer", "inner"],
+                cwd=root,
+                check=True,
+                stderr=DEVNULL,
+            )
+            run(["git", "tag", "-d", "inner"], cwd=root, check=True, stdout=DEVNULL)
+
+            findings = scan_git(root)
+
+        self.assertIn("private_project", {finding.rule for finding in findings})
+
+    def test_scan_git_scans_lightweight_tag_name(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            run(["git", "init", "-q"], cwd=root, check=True)
+            (root / "public.txt").write_text("public", encoding="utf-8")
+            run(["git", "add", "public.txt"], cwd=root, check=True)
+            identity = ["-c", "user.name=Fixture", "-c", "user.email=fixture@users.noreply.github.com"]
+            run(["git", *identity, "commit", "-qm", "public"], cwd=root, check=True)
+            run(["git", "tag", _private_project_name()], cwd=root, check=True)
 
             findings = scan_git(root)
 
