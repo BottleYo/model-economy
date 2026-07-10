@@ -14,6 +14,7 @@ sys.path.insert(0, str(SCRIPTS))
 
 from model_economy_lib.cli import main  # noqa: E402
 from model_economy_lib.doctor import DoctorReport, SmokeReport  # noqa: E402
+from model_economy_lib.models import ROLES  # noqa: E402
 
 
 class CliTests(unittest.TestCase):
@@ -111,15 +112,19 @@ class CliTests(unittest.TestCase):
 
     def test_upgrade_dry_run_reports_plan_without_writing(self):
         self.assertEqual(main(["--codex-home", str(self.home), "install", "--profile", "inherited"]), 0)
-        state_path = self.home / "model-economy" / "state.json"
-        before = state_path.read_bytes()
+        managed_paths = [
+            *(self.home / "agents" / f"{role.name}.toml" for role in ROLES),
+            self.home / "model-economy" / "config.toml",
+            self.home / "model-economy" / "state.json",
+        ]
+        before = {path: path.read_bytes() for path in managed_paths}
 
         output = StringIO()
         with redirect_stdout(output):
             code = main(["--codex-home", str(self.home), "upgrade", "--dry-run"])
 
         self.assertEqual(code, 0)
-        self.assertEqual(before, state_path.read_bytes())
+        self.assertEqual(before, {path: path.read_bytes() for path in managed_paths})
         self.assertIn("完成：", output.getvalue())
 
     def test_upgrade_dry_run_reports_conflict_for_missing_installation(self):
