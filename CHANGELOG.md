@@ -1,19 +1,21 @@
-# 更新记录
+[简体中文](CHANGELOG.zh-CN.md)
 
-本项目遵循语义化版本；显著变更记录在本文件。
+# Changelog
+
+This project follows Semantic Versioning. Notable changes are recorded here.
 
 ## 0.2.0 - 2026-07-11
 
-- 新增 `enable-global-routing` 与 `disable-global-routing`，安全、幂等地管理全局 `AGENTS.md` 开发路由块。
-- 扩展 `cost-aware-development` 的发现条件，使通用软件开发任务可以默认触发成本路由。
-- 全局规则保持跨项目，不包含具体业务背景，并允许项目自身的 `AGENTS.md` 覆盖。
+- Added `enable-global-routing` and `disable-global-routing` to manage a global `AGENTS.md` development-routing block safely and idempotently.
+- Extended `cost-aware-development` discovery so general software-development tasks can trigger capability-aware routing.
+- Kept the global rule cross-project and free of business context; a project's own `AGENTS.md` can override it.
 
 ## 0.1.0 - 2026-07-11
 
-- 首次公开发布：提供成本感知角色路由、可替换模型档案和本地生命周期 CLI。
-- 增加跨平台 CI、敏感内容检查和公开安全报告流程。
-- 补充本机 0.1.0 预览评估，覆盖临时 HOME 生命周期、真实 HOME 静态安装、跨项目静态发现与公开报告边界。
-- 为 `upgrade --dry-run` 暴露 CLI 干运行入口，用于生命周期集成验证。
-- 扩大敏感内容扫描范围并对 Git 读取失败采取失败关闭，补充带注释标签检查。
-- 事务回滚恢复原 POSIX 文件权限，并明确强制卸载会绕过所有权证明。
-- 修复 Windows 默认代码页导致的 UTF-8 文件读取与中文 CLI 输出失败。
+- First public release with capability-aware role routing, replaceable model profiles, and a local lifecycle CLI.
+- Added cross-platform CI, sensitive-content checks, and a public security-reporting path.
+- Added local 0.1.0 preview evaluation covering temporary-home lifecycle tests, static installation review, cross-project discovery, and public-report boundaries.
+- Exposed `upgrade --dry-run` for lifecycle integration verification.
+- Expanded sensitive-content scanning and fail-closed Git reading, including annotated tags.
+- Restored original POSIX file permissions during transactional rollback and documented forced-uninstall ownership behavior.
+- Fixed UTF-8 handling on Windows default code pages.

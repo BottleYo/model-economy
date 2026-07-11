@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-labelledby="title description">
+  <title id="title">Model Economy</title>
+  <desc id="description">Strong models for decisions. Efficient models for execution.</desc>
+  <rect width="1280" height="640" fill="#141719"/>
+  <path d="M80 130H1200" fill="none" stroke="#647077" stroke-width="2"/>
+  <path d="M80 496H1200" fill="none" stroke="#647077" stroke-width="2"/>
+  <g fill="none" stroke="#34C6A4" stroke-width="4" stroke-linecap="square">
+    <path d="M80 427H248V368H460V427H588V368H758V427H928V368H1200"/>
+  </g>
+  <g fill="#F6B74D">
+    <rect id="decide-badge" x="248" y="346" width="212" height="44" rx="2"/>
+    <rect id="verify-badge" x="928" y="346" width="222" height="44" rx="2"/>
+  </g>
+  <g fill="#141719" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" letter-spacing="2">
+    <text data-fit="decide-badge" x="272" y="373" font-size="13">STRONG / DECIDE</text>
+    <text data-fit="verify-badge" x="952" y="373" font-size="13">STRONG / VERIFY</text>
+  </g>
+  <g fill="#F5F7F7" font-family="Arial, Helvetica, sans-serif">
+    <text x="80" y="230" font-size="68" font-weight="700" letter-spacing="1">MODEL ECONOMY</text>
+    <text x="84" y="286" font-size="27">Strong models for decisions.</text>
+    <text x="84" y="324" font-size="27" fill="#C8D0D2">Efficient models for execution.</text>
+    <text x="80" y="554" font-size="20" font-weight="700" letter-spacing="1">Architecture · Implementation · Verification</text>
+  </g>
+  <text x="588" y="458" fill="#34C6A4" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" letter-spacing="2">BALANCED / EXECUTE</text>
+</svg>

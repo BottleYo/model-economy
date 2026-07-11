@@ -5,5 +5,8 @@ description = "Codex 成本感知模型角色路由插件"
 requires-python = ">=3.11"
 license = {text = "MIT"}
 
+[dependency-groups]
+test = ["Pillow==12.2.0"]
+
 [tool.model-economy]
 plugin-path = "plugins/model-economy"

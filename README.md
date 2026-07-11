@@ -1,117 +1,112 @@
+[简体中文](README.zh-CN.md)
+
 # Model Economy
 
-Model Economy 是一个 Codex 插件，用稳定角色和可替换的模型映射，让开发任务优先使用最低可胜任的能力档。它适用于需要保留设计审批、测试和验证纪律，同时希望控制模型额度消耗的代码工作流。
+> Use strong models for decisions, not routine work.
 
-它不替代工程判断，也不会自动执行发布、修改用户数据或统计 token 用量。当前版本不自动统计 token；请以 Codex 自身提供的用量信息为准。
+![Model Economy](assets/social-preview.png)
 
-## 要求与兼容性
+Model Economy is a Codex plugin for capability-aware development workflows. It keeps high-capability models at design, risk, and final-review gates; routes implementation and bounded research to suitable lower-cost capability tiers; and retains approval, testing, and verification discipline.
 
-- Python 3.11 或更高版本；运行时只使用标准库。
-- 支持 Linux、macOS 和 Windows。Windows 示例可将 `python` 替换为 `py -3.11`。
-- Codex CLI 需要提供 `plugin` 子命令。用 `codex plugin --help` 检查本机版本。
-- 需要 Git 的仓库才能让敏感内容检查覆盖可达提交历史；没有 Git 历史时只检查工作树。
+It does not measure token usage, promise savings, verify model or role identity, or replace engineering judgment.
 
-## 安装
+## Why it exists
 
-先获取公开仓库，再把其中的 marketplace 加入 Codex。以下命令与当前 Codex CLI 的 `plugin marketplace add`、`plugin add` 语法一致：
+- Reserve `strong` capability for consequential decisions instead of routine edits.
+- Match investigation, implementation, review, and fixed-rule batch work to explicit role boundaries.
+- Keep design approval, test-first implementation, and fresh verification as required gates.
+
+## How it works
+
+![Model Economy task flow](assets/model-economy-flow-en.svg)
+
+Tasks are classified in a fixed order: large or high-risk, mechanical, simple, then standard. The first matching class decides the permitted roles and the maximum number of `strong` calls. See [how it works](docs/en/how-it-works.md) for the complete policy.
+
+## Install in 60 seconds
 
 ```sh
 git clone https://github.com/BottleYo/model-economy.git
 cd model-economy
 codex plugin marketplace add .
 codex plugin add model-economy@model-economy-public
+python3 plugins/model-economy/scripts/model_economy.py install --profile inherited
+python3 plugins/model-economy/scripts/model_economy.py verify
 ```
 
-安装插件后，使用仓库中的本地 CLI 写入角色配置。可从三种配置方式中选择一种：
+Use `py -3.11` in place of `python3` on Windows. The full installation, upgrade, migration, and removal guide is in [Installation](docs/en/installation.md).
+
+## Task classification
+
+| Class | Conditions | Default capability | `strong` maximum |
+| --- | --- | --- | --- |
+| Large or high-risk | Any high-risk boundary, new architecture, or wide blast radius | `strong` gates plus `balanced` implementation | 2 |
+| Mechanical | All five fixed-rule conditions hold | `economy` batch work | 0 |
+| Simple | Known files, no open judgment, direct verification, and no creative or behavioral change | Main agent | 0 |
+| Standard | The fallback class | `balanced` | 1 |
+
+## Roles
+
+| Role | Capability | Access | Responsibility |
+| --- | --- | --- | --- |
+| `model-economy-architect` | `strong` | Read only | Architecture boundaries, risks, and decisions before high-risk design approval |
+| `model-economy-final-reviewer` | `strong` | Read only | Findings, evidence gaps, and residual risk after high-risk verification |
+| `model-economy-implementer` | `balanced` | Workspace write | Approved implementation, tests, and verification |
+| `model-economy-reviewer` | `balanced` | Read only | Independent findings and regression risks |
+| `model-economy-explorer` | `economy` | Read only | Minimal file inventory and facts |
+| `model-economy-batch-worker` | `economy` | Workspace write | Fixed-rule edits with per-item checks |
+
+## Global routing
+
+After installation, add the generic development-routing block to your global `$CODEX_HOME/AGENTS.md`:
 
 ```sh
-# 1. inherited：角色继承 Codex 当前模型设置
-python plugins/model-economy/scripts/model_economy.py install --profile inherited
+python3 plugins/model-economy/scripts/model_economy.py enable-global-routing
+```
 
-# 2. openai-56：使用随插件提供的三档模型映射
-python plugins/model-economy/scripts/model_economy.py install --profile openai-56
+The command is idempotent and changes only the marked, managed Model Economy block. A project's own `AGENTS.md` can override the global rule. Remove the block with:
 
-# 3. custom：显式提供 strong、balanced、economy 三个模型（POSIX）
-python plugins/model-economy/scripts/model_economy.py configure --strong <strong-model> --balanced <balanced-model> --economy <economy-model>
+```sh
+python3 plugins/model-economy/scripts/model_economy.py disable-global-routing
+```
 
-# PowerShell
+## Security and trust boundaries
+
+The local CLI manages only its configuration, its declared agent files under `CODEX_HOME`, and the marked, managed Model Economy block in `$CODEX_HOME/AGENTS.md`. It fails closed on missing, damaged, or conflicting managed state. Only an explicit user-authorized `--force` operation overrides the relevant ownership or conflict guard. It does not manage credentials, project data, unowned files, other plugins, or access control for `CODEX_HOME`.
+
+`doctor --smoke` can observe whether a subagent starts. Current Codex JSONL does not provide `agent_type`, so role identity and model identity remain unverified. Read [Security](SECURITY.md) before reporting a vulnerability.
+
+## Documentation
+
+- [Installation](docs/en/installation.md): prerequisites, install, upgrade, profile transfer, and uninstall.
+- [How it works](docs/en/how-it-works.md): classification, role boundaries, approval gates, and limits.
+- [CLI reference](docs/en/cli-reference.md): commands, options, and exit codes.
+- [Security policy](SECURITY.md): private vulnerability reporting and release checks.
+- [Changelog](CHANGELOG.md): released changes.
+
+## Current limitations
+
+- Token use is not measured or attributed by this plugin.
+- `doctor --smoke` does not verify role or model identity.
+- The plugin does not install or replace Superpowers; provide it separately when its workflows are required.
+- Global routing does not include project-specific context and is not removed automatically by plugin uninstall.
+
+## Contributing
+
+Run the local checks before opening a change:
+
+```sh
+python3 -m unittest discover -s tests -v
+python3 scripts/check_sensitive_content.py .
+```
+
+For a custom model mapping, pass all three capability tiers on one line:
+
+```sh
+# 3. custom
+python3 plugins/model-economy/scripts/model_economy.py configure --strong <strong-model> --balanced <balanced-model> --economy <economy-model>
 py -3.11 plugins/model-economy/scripts/model_economy.py configure --strong <strong-model> --balanced <balanced-model> --economy <economy-model>
 ```
 
-所有命令都可通过 `--codex-home <目录>` 指向另一套 Codex 配置目录；`--codex-bin <命令>` 用于 `doctor` 选择要诊断的 Codex 可执行文件。完整参数以 `python plugins/model-economy/scripts/model_economy.py --help` 为准。
+## License
 
-## 跨项目自动启用
-
-插件安装和角色配置完成后，可以把通用开发路由写入全局 `$CODEX_HOME/AGENTS.md`：
-
-```sh
-python plugins/model-economy/scripts/model_economy.py enable-global-routing
-```
-
-该命令使用受管理标记块追加规则，不覆盖块外的现有内容；重复执行为幂等操作。规则只面向软件开发、调试、重构、测试、代码审查和架构设计，不包含任何具体项目或业务背景。项目自身的 `AGENTS.md` 可以覆盖全局规则。
-
-需要撤销时运行：
-
-```sh
-python plugins/model-economy/scripts/model_economy.py disable-global-routing
-```
-
-禁用命令只删除 Model Economy 的受管理块，并逐字恢复启用前的文件内容；如果 `AGENTS.md` 由插件新建，禁用后会保留一个空文件。写入采用原子替换并保留普通文件的 POSIX mode；为避免破坏链接关系，符号链接和多硬链接文件会失败关闭。特殊 ACL 或扩展属性不属于当前版本的保全承诺。插件卸载不会自动删除全局规则；卸载前如需一并移除，应先执行禁用命令。Windows PowerShell 可将上述 `python` 替换为 `py -3.11`。
-
-## 诊断与 Smoke
-
-安装后运行：
-
-```sh
-python plugins/model-economy/scripts/model_economy.py verify
-python plugins/model-economy/scripts/model_economy.py doctor
-python plugins/model-economy/scripts/model_economy.py doctor --smoke
-```
-
-`doctor --smoke` 分三层报告：Subagent 启动、角色身份和模型身份。它只能观察到 Subagent 是否启动；当前 Codex JSONL 不提供 `agent_type`，因此角色身份显示“未验证”，模型身份也显示“未验证”。不要把 smoke 输出当成角色或模型隔离已被证明的证据。
-
-## 更新与卸载
-
-更新 marketplace 快照后，使用本地 CLI 更新已管理的角色文件：
-
-```sh
-codex plugin marketplace upgrade model-economy-public
-python plugins/model-economy/scripts/model_economy.py upgrade
-```
-
-普通卸载保留本地配置；`--purge` 同时删除插件管理的配置。若文件被手动修改，命令会以冲突失败，先检查差异。安装或升级时，`--force` 会覆盖冲突文件；卸载时，`--force` 会绕过状态文件的所有权证明，删除六个固定名称的 Model Economy 角色文件和状态文件，配合 `--purge` 还会删除插件配置。只有在确认这些同名文件均应由本插件移除时才使用强制卸载。
-
-```sh
-python plugins/model-economy/scripts/model_economy.py uninstall
-python plugins/model-economy/scripts/model_economy.py uninstall --purge
-codex plugin remove model-economy@model-economy-public
-```
-
-## 兼容模式
-
-`inherited` 是兼容模式：生成的角色文件不固定模型名，继续使用 Codex 当前的模型配置。`openai-56` 与 `custom` 会写入明确的角色模型映射。配置切换仍受完整性检查保护；若本地文件与记录不一致，先处理冲突再继续。
-
-## 隐私与信任边界
-
-本地 CLI 只管理 `CODEX_HOME/model-economy/` 下的 `config.toml` 和 `state.json`，以及 `CODEX_HOME/agents/` 中由它写入的角色文件。`config.toml` 保存档案名和可选模型标识，不应存放凭据。`state.json` 保存已管理文件及其哈希，是本地包管理元数据，不是防篡改凭证，也不应被当作授权来源。
-
-CLI 对缺失、损坏或哈希不一致的配置和状态采取失败关闭策略，不会据此删除不确定归属的文件。`CODEX_HOME` 的访问控制、用户提示、其他插件和未受管理的角色文件均在本插件的信任边界之外。不要将凭据、私人路径、个人项目名或生产数据提交到本仓库；提交前运行：
-
-```sh
-python scripts/check_sensitive_content.py .
-```
-
-扫描器只打印相对路径、行号和规则名，不会回显疑似秘密原文。工作树检查覆盖所有可解码的 UTF-8 文本文件，不依赖扩展名，并跳过二进制文件和明确忽略的运行目录；历史检查覆盖每个可达 Git 提交的作者和提交者邮箱、提交消息、树路径、文本 blob，以及带注释标签的元数据和消息。任何必要的 Git 命令失败都会使扫描失败关闭。
-
-## 与 Superpowers 的关系
-
-插件内的 `cost-aware-development` skill 约束模型角色选择，并要求继续遵循 Superpowers 的设计审批、计划、测试驱动开发和完成前验证流程。它不安装、不替换也不绕过 Superpowers；需要这些流程时，请在 Codex 环境中单独提供 Superpowers。
-
-## 开发检查
-
-```sh
-python -m unittest discover -s tests -v
-python scripts/check_sensitive_content.py .
-```
-
-CI 会在 Linux、macOS、Windows 的 Python 3.11 与 3.12 上运行相同检查。
+[MIT](LICENSE)

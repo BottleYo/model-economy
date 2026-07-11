@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="760" viewBox="0 0 1440 760" role="img" aria-labelledby="title description">
+  <title id="title">Model Economy 分类与路由流程</title>
+  <desc id="description">任务分类为简单、标准、大型或高风险、机械批处理四条路径，并使用不同模型能力。</desc>
+  <rect width="1440" height="760" fill="#141719"/>
+  <g font-family="PingFang SC, Noto Sans CJK SC, Arial, sans-serif">
+    <text x="72" y="70" fill="#F5F7F7" font-size="22" font-weight="700" letter-spacing="3">MODEL ECONOMY / 路由流程</text>
+    <text x="72" y="102" fill="#AEB8BC" font-size="16">先分类，只在关键决策需要时使用强模型。</text>
+    <path d="M72 126H1368" fill="none" stroke="#647077" stroke-width="2"/>
+
+    <g fill="#1D2326" stroke="#7B878C" stroke-width="2">
+      <rect id="task-card" x="72" y="160" width="172" height="72" rx="2"/>
+      <rect id="classify-card" x="304" y="160" width="196" height="72" rx="2"/>
+    </g>
+    <text x="92" y="190" fill="#AEB8BC" font-size="12" font-weight="700" letter-spacing="2">01</text>
+    <text x="92" y="216" fill="#F5F7F7" font-size="20" font-weight="700">任务</text>
+    <text x="324" y="190" fill="#AEB8BC" font-size="12" font-weight="700" letter-spacing="2">02</text>
+    <text x="324" y="216" fill="#F5F7F7" font-size="20" font-weight="700">分类</text>
+    <path d="M244 196H288" fill="none" stroke="#34C6A4" stroke-width="4"/>
+    <path d="M288 188L304 196L288 204Z" fill="#34C6A4"/>
+    <path d="M500 196H520V619" fill="none" stroke="#34C6A4" stroke-width="3"/>
+
+    <g data-route="simple">
+      <path d="M520 283H550" fill="none" stroke="#34C6A4" stroke-width="3"/>
+      <rect id="simple-route" x="550" y="246" width="190" height="74" rx="2" fill="#1D2326" stroke="#7B878C" stroke-width="2"/>
+      <text x="570" y="274" fill="#F5F7F7" font-size="17" font-weight="700">简单任务</text>
+      <text x="570" y="300" fill="#AEB8BC" font-size="13">小型、低风险改动</text>
+      <rect id="simple-result" x="790" y="246" width="578" height="74" rx="2" fill="#1D2326" stroke="#34C6A4" stroke-width="2"/>
+      <text x="814" y="277" fill="#F5F7F7" font-size="17" font-weight="700">主代理 · 实施 + 验证</text>
+      <text x="814" y="302" fill="#34C6A4" font-size="12" font-weight="700" letter-spacing="2">不使用 STRONG</text>
+    </g>
+
+    <g data-route="standard">
+      <path d="M520 388H550" fill="none" stroke="#34C6A4" stroke-width="3"/>
+      <rect id="standard-route" x="550" y="351" width="190" height="74" rx="2" fill="#1D2326" stroke="#7B878C" stroke-width="2"/>
+      <text x="570" y="379" fill="#F5F7F7" font-size="17" font-weight="700">标准任务</text>
+      <text x="570" y="405" fill="#AEB8BC" font-size="13">边界明确的功能工作</text>
+      <rect id="standard-result" x="790" y="351" width="578" height="74" rx="2" fill="#1D2326" stroke="#34C6A4" stroke-width="2"/>
+      <text x="814" y="381" fill="#F5F7F7" font-size="17" font-weight="700">BALANCED · 实施 + 验证</text>
+      <rect x="1094" y="392" width="250" height="20" rx="2" fill="#F6B74D"/>
+      <text x="1106" y="407" fill="#141719" font-size="10" font-weight="700" letter-spacing="1">两次失败后 · 仅诊断 1 次</text>
+    </g>
+
+    <g data-route="large-high-risk">
+      <path d="M520 493H550" fill="none" stroke="#34C6A4" stroke-width="3"/>
+      <rect id="large-route" x="550" y="456" width="190" height="74" rx="2" fill="#1D2326" stroke="#F6B74D" stroke-width="2"/>
+      <text x="570" y="484" fill="#F5F7F7" font-size="17" font-weight="700">大型 / 高风险</text>
+      <text x="570" y="510" fill="#AEB8BC" font-size="13">跨模块关键决策</text>
+      <rect id="architect-card" x="790" y="456" width="160" height="74" rx="2" fill="#1D2326" stroke="#F6B74D" stroke-width="2"/>
+      <text data-fit="architect-card" x="810" y="487" fill="#F5F7F7" font-size="16" font-weight="700">架构决策</text>
+      <text x="810" y="512" fill="#F6B74D" font-size="11" font-weight="700" letter-spacing="1">STRONG</text>
+      <rect id="implement-card" x="980" y="456" width="160" height="74" rx="2" fill="#1D2326" stroke="#34C6A4" stroke-width="2"/>
+      <text data-fit="implement-card" x="1000" y="487" fill="#F5F7F7" font-size="16" font-weight="700">实施</text>
+      <text x="1000" y="512" fill="#34C6A4" font-size="11" font-weight="700" letter-spacing="1">BALANCED</text>
+      <rect id="review-card" x="1170" y="456" width="198" height="74" rx="2" fill="#1D2326" stroke="#F6B74D" stroke-width="2"/>
+      <text data-fit="review-card" x="1190" y="487" fill="#F5F7F7" font-size="16" font-weight="700">最终审查</text>
+      <text x="1190" y="512" fill="#F6B74D" font-size="11" font-weight="700" letter-spacing="1">STRONG</text>
+      <path d="M950 493H964M1140 493H1154" fill="none" stroke="#34C6A4" stroke-width="3"/>
+      <path d="M964 486L978 493L964 500ZM1154 486L1168 493L1154 500Z" fill="#34C6A4"/>
+    </g>
+
+    <g data-route="mechanical">
+      <path d="M520 619H550" fill="none" stroke="#34C6A4" stroke-width="3"/>
+      <rect id="mechanical-route" x="550" y="582" width="190" height="74" rx="2" fill="#1D2326" stroke="#7B878C" stroke-width="2"/>
+      <text x="570" y="610" fill="#F5F7F7" font-size="17" font-weight="700">机械批处理</text>
+      <text x="570" y="636" fill="#AEB8BC" font-size="13">可重复、相互隔离</text>
+      <rect id="mechanical-result" x="790" y="582" width="578" height="74" rx="2" fill="#1D2326" stroke="#34C6A4" stroke-width="2"/>
+      <text x="814" y="613" fill="#F5F7F7" font-size="17" font-weight="700">ECONOMY BATCH</text>
+      <text x="814" y="638" fill="#AEB8BC" font-size="13">并行执行 · 确定性检查</text>
+    </g>
+
+    <text x="72" y="708" fill="#AEB8BC" font-size="13">分类决定模型能力；所有路径都必须用证据完成验证。</text>
+  </g>
+</svg>

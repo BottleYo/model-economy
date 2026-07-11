@@ -1,22 +1,28 @@
-# 安全策略
+[简体中文](SECURITY.zh-CN.md)
 
-## 支持版本
+# Security Policy
 
-当前仅维护最新发布版本。请先升级到最新版本后复现问题。
+## Supported versions
 
-## 私密报告
+Only the latest released version is supported. Upgrade before reporting an issue when possible.
 
-请不要在公开 Issue、讨论区或提交中披露安全问题、凭据、私人路径或可利用细节。请在仓库的 GitHub Security Advisory 流程中选择“Report a vulnerability”提交私密报告。
+## Private reporting
 
-报告请包含受影响版本、复现步骤、影响范围和可选修复建议。请使用最小化示例，并移除任何敏感内容。维护者会在 GitHub Security Advisory 中确认收到报告、评估影响，并在适当时协调修复和披露。
+Do not disclose vulnerabilities, credentials, private paths, or exploit details in public issues, discussions, or commits. Use GitHub Security Advisories and select **Report a vulnerability** for a private report.
 
-## 发布前检查
+Include the affected version, reproduction steps, impact, and an optional remediation proposal. Use the smallest useful example and remove sensitive material. Maintainers will acknowledge the report in the advisory, assess impact, and coordinate a fix and disclosure when appropriate.
 
-维护者在发布前运行：
+## Trust boundaries
+
+The CLI manages Model Economy configuration, declared agent files under `CODEX_HOME`, and the marked, managed Model Economy block in `$CODEX_HOME/AGENTS.md`; it does not manage credentials or validate model and role identity. Configuration corruption or ownership conflicts fail closed. Only an explicit user-authorized `--force` operation overrides the relevant ownership or conflict guard. Details are in the [README](README.md).
+
+## Release checks
+
+Maintainers run:
 
 ```sh
-python scripts/check_sensitive_content.py .
-python -m unittest discover -s tests -v
+python3 scripts/check_sensitive_content.py .
+python3 -m unittest discover -s tests -v
 ```
 
-敏感内容检查覆盖工作树，以及每个可达 Git 提交的作者和提交者邮箱、提交消息、树路径与文本 blob。发现问题时只输出相对路径、行号和规则名，不输出匹配原文。
+The sensitive-content check covers the worktree and every reachable Git commit's author and committer emails, messages, paths, and text blobs. It reports relative paths, line numbers, and rule names without printing matched content.
