@@ -1,6 +1,6 @@
 {
   "name": "model-economy",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "为 Codex 开发任务选择最低可胜任模型角色的成本路由插件",
   "author": {
     "name": "Model Economy Contributors"

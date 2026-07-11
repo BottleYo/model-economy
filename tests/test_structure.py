@@ -20,6 +20,21 @@ class StructureTests(unittest.TestCase):
         self.assertEqual(entry["name"], manifest["name"])
         self.assertEqual(entry["source"]["path"], "./plugins/model-economy")
 
+    def test_global_routing_release_contract(self):
+        manifest = json.loads(
+            (ROOT / "plugins/model-economy/.codex-plugin/plugin.json").read_text(encoding="utf-8")
+        )
+        skill = (ROOT / "plugins/model-economy/skills/cost-aware-development/SKILL.md").read_text(
+            encoding="utf-8"
+        )
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+
+        self.assertEqual(manifest["version"], "0.2.0")
+        self.assertIn("软件开发", skill.split("---", 2)[1])
+        self.assertIn("enable-global-routing", readme)
+        self.assertIn("disable-global-routing", readme)
+        self.assertIn("项目自身的 `AGENTS.md` 可以覆盖", readme)
+
     def test_ci_checkout_fetches_full_history(self):
         workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
         checkout = "      - uses: actions/checkout@v4\n"

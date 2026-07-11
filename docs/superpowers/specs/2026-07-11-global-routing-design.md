@@ -29,6 +29,7 @@ model_economy disable-global-routing
 
 ```markdown
 <!-- model-economy:global-routing:start -->
+<!-- model-economy:global-routing:origin=existing;separator-newlines=1 -->
 ## 默认开发路由
 
 - 在任何项目和新会话中，涉及软件开发、调试、重构、测试、代码审查或架构设计时，默认使用已安装的 Model Economy `cost-aware-development` skill。
@@ -39,6 +40,8 @@ model_economy disable-global-routing
 - 不自动运行 `doctor --smoke`，不为验证模型身份额外消耗额度。
 <!-- model-economy:global-routing:end -->
 ```
+
+第二行是插件维护的恢复元数据，只记录目标文件启用前是否存在，以及为排版追加的换行数量；不记录用户内容、路径、哈希或其他环境信息。重复启用时保留恢复元数据，只更新规则正文。借此保证启用后再禁用能够逐字恢复原文件；原文件不存在时，禁用会重新删除它。
 
 ## 文件合并规则
 

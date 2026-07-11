@@ -9,6 +9,7 @@ from typing import Sequence
 from .config import ConfigError, export_profile, import_profile, load_config
 from .doctor import SmokeReport, run_doctor, run_smoke, verify_installation
 from .filesystem import resolve_codex_home
+from .global_routing import disable_global_routing, enable_global_routing
 from .lifecycle import ChangeSet, ConflictError, Context, install, plan_upgrade, uninstall, upgrade
 from .models import Profile
 from .profiles import load_profile
@@ -91,6 +92,8 @@ def _build_parser() -> Parser:
     uninstall_parser = command("uninstall")
     uninstall_parser.add_argument("--purge", action="store_true")
     uninstall_parser.add_argument("--force", action="store_true")
+    command("enable-global-routing")
+    command("disable-global-routing")
     return parser
 
 
@@ -100,7 +103,7 @@ def _context(codex_home: Path | None) -> Context:
         if codex_home is not None
         else resolve_codex_home(os.environ)
     )
-    return Context(home, PLUGIN_ROOT, "0.1.0")
+    return Context(home, PLUGIN_ROOT, "0.2.0")
 
 
 def _load_bundled_profile(name: str) -> Profile:
@@ -190,6 +193,12 @@ def _run(args: argparse.Namespace) -> int:
         if changes.conflicts:
             return CONFLICT
         _print_changes(changes)
+        return SUCCESS
+    if args.command == "enable-global-routing":
+        _print_changes(enable_global_routing(context.codex_home / "AGENTS.md"))
+        return SUCCESS
+    if args.command == "disable-global-routing":
+        _print_changes(disable_global_routing(context.codex_home / "AGENTS.md"))
         return SUCCESS
     raise UsageError("未知命令")
 

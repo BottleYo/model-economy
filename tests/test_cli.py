@@ -14,6 +14,7 @@ sys.path.insert(0, str(SCRIPTS))
 
 from model_economy_lib.cli import main  # noqa: E402
 from model_economy_lib.doctor import DoctorReport, SmokeReport  # noqa: E402
+from model_economy_lib.global_routing import END_MARKER, START_MARKER  # noqa: E402
 from model_economy_lib.models import ROLES  # noqa: E402
 
 
@@ -151,6 +152,54 @@ class CliTests(unittest.TestCase):
 
     def test_verify_returns_one_for_missing_installation(self):
         self.assertEqual(main(["--codex-home", str(self.home), "verify"]), 1)
+
+    def test_enable_global_routing_uses_explicit_codex_home(self):
+        code = main(["--codex-home", str(self.home), "enable-global-routing"])
+
+        target = self.home / "AGENTS.md"
+        self.assertEqual(code, 0)
+        self.assertIn(START_MARKER, target.read_text(encoding="utf-8"))
+        self.assertFalse((self.default_home / ".codex" / "AGENTS.md").exists())
+
+    def test_repeated_enable_global_routing_performs_zero_writes(self):
+        self.assertEqual(main(["--codex-home", str(self.home), "enable-global-routing"]), 0)
+
+        with patch("model_economy_lib.global_routing.atomic_write") as write:
+            code = main(["--codex-home", str(self.home), "enable-global-routing"])
+
+        self.assertEqual(code, 0)
+        write.assert_not_called()
+
+    def test_disable_global_routing_restores_existing_agents_file(self):
+        target = self.home / "AGENTS.md"
+        target.parent.mkdir(parents=True)
+        original = "# Existing\n\nKeep this rule.\n"
+        target.write_text(original, encoding="utf-8")
+        self.assertEqual(main(["--codex-home", str(self.home), "enable-global-routing"]), 0)
+
+        code = main(["--codex-home", str(self.home), "disable-global-routing"])
+
+        self.assertEqual(code, 0)
+        self.assertEqual(target.read_text(encoding="utf-8"), original)
+
+    def test_disable_global_routing_removes_file_created_by_plugin(self):
+        self.assertEqual(main(["--codex-home", str(self.home), "enable-global-routing"]), 0)
+
+        code = main(["--codex-home", str(self.home), "disable-global-routing"])
+
+        self.assertEqual(code, 0)
+        self.assertFalse((self.home / "AGENTS.md").exists())
+
+    def test_global_routing_with_malformed_markers_returns_conflict_without_writing(self):
+        target = self.home / "AGENTS.md"
+        target.parent.mkdir(parents=True)
+        target.write_text(START_MARKER + "\n" + END_MARKER, encoding="utf-8")
+        before = target.read_bytes()
+
+        code = main(["--codex-home", str(self.home), "enable-global-routing"])
+
+        self.assertEqual(code, 2)
+        self.assertEqual(target.read_bytes(), before)
 
     def test_doctor_smoke_prints_three_explicit_verification_layers(self):
         doctor = DoctorReport(True, {"local": True, "codex": True}, True)

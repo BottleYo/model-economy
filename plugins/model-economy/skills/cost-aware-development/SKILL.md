@@ -1,6 +1,6 @@
 ---
 name: cost-aware-development
-description: 当用户提出省 token、成本路由、分层模型，或大型开发任务时，用最低可胜任模型并保持 Superpowers 的工程纪律。
+description: 当任务涉及软件开发、调试、重构、测试、代码审查、架构设计、节省 token、成本路由或分层模型时使用。
 ---
 
 # 成本感知开发

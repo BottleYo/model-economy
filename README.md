@@ -40,6 +40,24 @@ py -3.11 plugins/model-economy/scripts/model_economy.py configure --strong <stro
 
 所有命令都可通过 `--codex-home <目录>` 指向另一套 Codex 配置目录；`--codex-bin <命令>` 用于 `doctor` 选择要诊断的 Codex 可执行文件。完整参数以 `python plugins/model-economy/scripts/model_economy.py --help` 为准。
 
+## 跨项目自动启用
+
+插件安装和角色配置完成后，可以把通用开发路由写入全局 `$CODEX_HOME/AGENTS.md`：
+
+```sh
+python plugins/model-economy/scripts/model_economy.py enable-global-routing
+```
+
+该命令使用受管理标记块追加规则，不覆盖块外的现有内容；重复执行为幂等操作。规则只面向软件开发、调试、重构、测试、代码审查和架构设计，不包含任何具体项目或业务背景。项目自身的 `AGENTS.md` 可以覆盖全局规则。
+
+需要撤销时运行：
+
+```sh
+python plugins/model-economy/scripts/model_economy.py disable-global-routing
+```
+
+禁用命令只删除 Model Economy 的受管理块，并逐字恢复启用前的文件内容。插件卸载不会自动删除全局规则；卸载前如需一并移除，应先执行禁用命令。Windows PowerShell 可将上述 `python` 替换为 `py -3.11`。
+
 ## 诊断与 Smoke
 
 安装后运行：
