@@ -28,6 +28,17 @@ class UsageError(ValueError):
     """Raised for invalid command-line usage without terminating the caller."""
 
 
+def _configure_stdio() -> None:
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is None:
+            continue
+        try:
+            reconfigure(errors="backslashreplace")
+        except (OSError, ValueError):
+            pass
+
+
 class Parser(argparse.ArgumentParser):
     def error(self, message: str) -> None:
         raise UsageError(message)
@@ -185,6 +196,7 @@ def _run(args: argparse.Namespace) -> int:
 
 def main(argv: Sequence[str] | None = None) -> int:
     """Run a command and return a stable process exit code."""
+    _configure_stdio()
     parser = _build_parser()
     try:
         args = parser.parse_args(argv)

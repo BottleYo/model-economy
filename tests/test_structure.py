@@ -8,8 +8,12 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class StructureTests(unittest.TestCase):
     def test_manifest_and_marketplace_agree(self):
-        manifest = json.loads((ROOT / "plugins/model-economy/.codex-plugin/plugin.json").read_text())
-        marketplace = json.loads((ROOT / ".agents/plugins/marketplace.json").read_text())
+        manifest = json.loads(
+            (ROOT / "plugins/model-economy/.codex-plugin/plugin.json").read_text(encoding="utf-8")
+        )
+        marketplace = json.loads(
+            (ROOT / ".agents/plugins/marketplace.json").read_text(encoding="utf-8")
+        )
         self.assertEqual(manifest["name"], "model-economy")
         self.assertEqual(marketplace["name"], "model-economy-public")
         entry = marketplace["plugins"][0]
@@ -20,6 +24,10 @@ class StructureTests(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
         checkout = "      - uses: actions/checkout@v4\n"
         self.assertIn(checkout + "        with:\n          fetch-depth: 0\n", workflow)
+
+    def test_ci_forces_utf8_on_every_platform(self):
+        workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
+        self.assertIn('PYTHONUTF8: "1"', workflow)
 
     def test_readme_custom_commands_are_single_line_for_posix_and_powershell(self):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")

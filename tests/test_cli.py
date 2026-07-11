@@ -3,7 +3,7 @@ import sys
 import tempfile
 import unittest
 from contextlib import redirect_stdout
-from io import StringIO
+from io import BytesIO, StringIO, TextIOWrapper
 from pathlib import Path
 from unittest.mock import patch
 
@@ -61,6 +61,13 @@ class CliTests(unittest.TestCase):
         code = main(["--codex-home", str(self.home), "install", "--profile", "inherited"])
         self.assertEqual(code, 0)
         self.assertTrue((self.home / "model-economy" / "config.toml").exists())
+
+    def test_install_does_not_fail_when_console_cannot_encode_chinese(self):
+        output = TextIOWrapper(BytesIO(), encoding="cp1252")
+        with patch("sys.stdout", output):
+            code = main(["--codex-home", str(self.home), "install", "--profile", "inherited"])
+
+        self.assertEqual(code, 0)
 
     def test_conflict_returns_two(self):
         target = self.home / "agents" / "model-economy-architect.toml"

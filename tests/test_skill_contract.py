@@ -13,11 +13,11 @@ CONTEXT_CONTRACT = SKILL_DIR / "references/context-contract.md"
 
 
 def load_policy():
-    return json.loads(POLICY.read_text())
+    return json.loads(POLICY.read_text(encoding="utf-8"))
 
 
 def parse_markdown_table(path: Path, header: tuple[str, ...]) -> list[dict[str, str]]:
-    lines = path.read_text().splitlines()
+    lines = path.read_text(encoding="utf-8").splitlines()
     wanted = list(header)
 
     for index, line in enumerate(lines):
@@ -316,7 +316,7 @@ class SkillContractTests(unittest.TestCase):
             },
         )
         self.assertEqual(sanitization["placeholder_format"], "[REDACTED_<TYPE>]")
-        self.assertIn("## 脱敏规则", CONTEXT_CONTRACT.read_text())
+        self.assertIn("## 脱敏规则", CONTEXT_CONTRACT.read_text(encoding="utf-8"))
 
     def test_delegated_write_sets_are_mutually_exclusive_or_serialized_by_the_main_agent(self):
         write_sets = load_policy()["delegation"]["write_file_sets"]
@@ -383,7 +383,7 @@ class SkillContractTests(unittest.TestCase):
             )
             self.assertEqual(int(row["`strong` 上限"]), class_policy["strong_max"])
 
-        self.assertIn("references/routing-policy.json", SKILL.read_text())
+        self.assertIn("references/routing-policy.json", SKILL.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":

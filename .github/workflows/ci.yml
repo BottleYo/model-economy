@@ -4,6 +4,8 @@ on: [push, pull_request]
 
 jobs:
   test:
+    env:
+      PYTHONUTF8: "1"
     strategy:
       fail-fast: false
       matrix:
