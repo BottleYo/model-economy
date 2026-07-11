@@ -154,17 +154,26 @@ class UsageTests(unittest.TestCase):
         missing = self.root / "missing"
         unexecutable = self.root / "unexecutable"
         unexecutable.write_text("x", encoding="utf-8")
-        unexecutable.chmod(0o600)
 
-        for candidate in (missing, unexecutable):
-            with self.subTest(candidate=candidate), self.assertRaises(UsageError):
-                discover_codexbar(
-                    explicit=candidate,
-                    env={},
-                    which=lambda _name: None,
-                    platform="linux",
-                    macos_candidates=(),
-                )
+        with self.assertRaises(UsageError):
+            discover_codexbar(
+                explicit=missing,
+                env={},
+                which=lambda _name: None,
+                platform="linux",
+                macos_candidates=(),
+            )
+
+        with patch("model_economy_lib.usage.os.access", return_value=False), self.assertRaises(
+            UsageError
+        ):
+            discover_codexbar(
+                explicit=unexecutable,
+                env={},
+                which=lambda _name: None,
+                platform="linux",
+                macos_candidates=(),
+            )
 
     def test_version_requires_codexbar_041_or_newer(self):
         binary = self.executable("codexbar")
