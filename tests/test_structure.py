@@ -24,12 +24,14 @@ class StructureTests(unittest.TestCase):
         manifest = json.loads(
             (ROOT / "plugins/model-economy/.codex-plugin/plugin.json").read_text(encoding="utf-8")
         )
+        pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
         skill = (ROOT / "plugins/model-economy/skills/cost-aware-development/SKILL.md").read_text(
             encoding="utf-8"
         )
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
         self.assertEqual(manifest["version"], "0.2.0")
+        self.assertIn('version = "0.2.0"', pyproject)
         self.assertIn("软件开发", skill.split("---", 2)[1])
         self.assertIn("enable-global-routing", readme)
         self.assertIn("disable-global-routing", readme)

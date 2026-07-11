@@ -182,18 +182,18 @@ class CliTests(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertEqual(target.read_text(encoding="utf-8"), original)
 
-    def test_disable_global_routing_removes_file_created_by_plugin(self):
+    def test_disable_global_routing_leaves_empty_file_created_by_plugin(self):
         self.assertEqual(main(["--codex-home", str(self.home), "enable-global-routing"]), 0)
 
         code = main(["--codex-home", str(self.home), "disable-global-routing"])
 
         self.assertEqual(code, 0)
-        self.assertFalse((self.home / "AGENTS.md").exists())
+        self.assertEqual((self.home / "AGENTS.md").read_bytes(), b"")
 
     def test_global_routing_with_malformed_markers_returns_conflict_without_writing(self):
         target = self.home / "AGENTS.md"
         target.parent.mkdir(parents=True)
-        target.write_text(START_MARKER + "\n" + END_MARKER, encoding="utf-8")
+        target.write_text(START_MARKER + "\n损坏的未闭合块", encoding="utf-8")
         before = target.read_bytes()
 
         code = main(["--codex-home", str(self.home), "enable-global-routing"])

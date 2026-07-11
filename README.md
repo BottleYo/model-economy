@@ -56,7 +56,7 @@ python plugins/model-economy/scripts/model_economy.py enable-global-routing
 python plugins/model-economy/scripts/model_economy.py disable-global-routing
 ```
 
-禁用命令只删除 Model Economy 的受管理块，并逐字恢复启用前的文件内容。插件卸载不会自动删除全局规则；卸载前如需一并移除，应先执行禁用命令。Windows PowerShell 可将上述 `python` 替换为 `py -3.11`。
+禁用命令只删除 Model Economy 的受管理块，并逐字恢复启用前的文件内容；如果 `AGENTS.md` 由插件新建，禁用后会保留一个空文件。写入采用原子替换并保留普通文件的 POSIX mode；为避免破坏链接关系，符号链接和多硬链接文件会失败关闭。特殊 ACL 或扩展属性不属于当前版本的保全承诺。插件卸载不会自动删除全局规则；卸载前如需一并移除，应先执行禁用命令。Windows PowerShell 可将上述 `python` 替换为 `py -3.11`。
 
 ## 诊断与 Smoke
 
