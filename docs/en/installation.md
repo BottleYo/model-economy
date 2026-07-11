@@ -10,6 +10,16 @@
 
 Linux, macOS, and Windows are supported. On Windows, use `py -3.11` where this guide uses `python3`.
 
+## Optional usage dependency
+
+The `usage` command requires CodexBar 0.41.0 or later. Model Economy discovers the official CLI normally on macOS and Linux. If it is not on `PATH`, pass its CLI helper explicitly:
+
+```sh
+python3 plugins/model-economy/scripts/model_economy.py usage --codexbar-bin /path/to/CodexBarCLI
+```
+
+On Windows, Model Economy does not claim official CodexBar support; provide a compatible executable explicitly with `--codexbar-bin` or `CODEXBAR_BIN`. CodexBar is optional, and its absence does not affect installation, routing, upgrades, or verification.
+
 ## Install the plugin
 
 Clone the public repository, add its marketplace, then add the plugin:
@@ -49,6 +59,8 @@ python3 plugins/model-economy/scripts/model_economy.py doctor --smoke
 ```
 
 `doctor --smoke` checks whether a subagent starts. It does not verify role or model identity.
+
+`verify` also checks that installed managed role templates match the current plugin version. After updating the plugin snapshot, run `upgrade` before expecting verification to pass.
 
 ## Enable global routing
 

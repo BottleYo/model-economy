@@ -10,6 +10,16 @@
 
 支持 Linux、macOS 和 Windows。本文使用 `python3` 的位置，在 Windows 中可替换为 `py -3.11`。
 
+## 可选用量依赖
+
+`usage` 命令需要 CodexBar 0.41.0 或更高版本。Model Economy 会在 macOS 与 Linux 上按常规位置发现官方 CLI；若不在 `PATH`，可显式指定 CLI Helper：
+
+```sh
+python3 plugins/model-economy/scripts/model_economy.py usage --codexbar-bin /path/to/CodexBarCLI
+```
+
+Model Economy 不宣称 Windows 获得 CodexBar 官方支持；需要通过 `--codexbar-bin` 或 `CODEXBAR_BIN` 显式提供兼容可执行文件。CodexBar 是可选依赖，缺失不会影响安装、路由、升级或验证。
+
 ## 安装插件
 
 克隆公开仓库，加入 marketplace，再安装插件：
@@ -49,6 +59,8 @@ python3 plugins/model-economy/scripts/model_economy.py doctor --smoke
 ```
 
 `doctor --smoke` 检查 Subagent 是否启动，不验证角色或模型身份。
+
+`verify` 还会检查已安装的受管理角色模板是否与当前插件版本一致。更新插件快照后，需要先运行 `upgrade`，验证才会恢复通过。
 
 ## 启用全局路由
 

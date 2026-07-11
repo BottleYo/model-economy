@@ -8,7 +8,7 @@
 
 Model Economy is a Codex plugin for capability-aware development workflows. It keeps high-capability models at design, risk, and final-review gates; routes implementation and bounded research to suitable lower-cost capability tiers; and retains approval, testing, and verification discipline.
 
-It does not measure token usage, promise savings, verify model or role identity, or replace engineering judgment.
+It can display local CodexBar token and estimated-cost summaries. It does not scan sessions itself, promise savings, verify model or role identity, or replace engineering judgment.
 
 ## Why it exists
 
@@ -34,6 +34,18 @@ python3 plugins/model-economy/scripts/model_economy.py verify
 ```
 
 Use `py -3.11` in place of `python3` on Windows. The full installation, upgrade, migration, and removal guide is in [Installation](docs/en/installation.md).
+
+## View usage
+
+With CodexBar 0.41.0 or later installed, view local Codex usage without exposing account credentials:
+
+```sh
+python3 plugins/model-economy/scripts/model_economy.py usage
+python3 plugins/model-economy/scripts/model_economy.py usage --days 7 --project .
+python3 plugins/model-economy/scripts/model_economy.py usage --format json
+```
+
+The adapter reports CodexBar's local token totals, model breakdowns, and estimated cost. It does not attribute tokens to Model Economy roles.
 
 ## Task classification
 
@@ -85,7 +97,7 @@ The local CLI manages only its configuration, its declared agent files under `CO
 
 ## Current limitations
 
-- Token use is not measured or attributed by this plugin.
+- Usage summaries come from optional CodexBar local statistics; Model Economy does not scan sessions itself or attribute tokens to roles.
 - `doctor --smoke` does not verify role or model identity.
 - The plugin does not install or replace Superpowers; provide it separately when its workflows are required.
 - Global routing does not include project-specific context and is not removed automatically by plugin uninstall.

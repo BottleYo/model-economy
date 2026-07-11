@@ -77,6 +77,16 @@ python3 plugins/model-economy/scripts/model_economy.py disable-global-routing
 
 These commands add or remove only the managed Model Economy block in `$CODEX_HOME/AGENTS.md`.
 
+## `usage`
+
+```sh
+python3 plugins/model-economy/scripts/model_economy.py usage [--days 1..365] [--project <path>] [--format text|json] [--codexbar-bin <path>]
+```
+
+Reads local CodexBar 0.41.0-or-later cost JSON. The default is the last 30 calendar days. `--project` selects an exact project path but public output contains only its directory name. `--format json` emits Model Economy's stable `usage_schema_version: 1` envelope.
+
+CodexBar is an optional third-party local program. Model Economy does not read its credentials or session files, but it cannot guarantee CodexBar's internal behavior. Costs are CodexBar estimates; role attribution and model identity remain unverified. macOS and Linux support normal CLI discovery. On Windows, provide a compatible executable explicitly with `--codexbar-bin` or `CODEXBAR_BIN`.
+
 ## Exit codes
 
 | Code | Meaning |

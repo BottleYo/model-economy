@@ -8,7 +8,7 @@
 
 Model Economy 是一个面向 Codex 的能力分层开发工作流插件。它把高能力模型留给设计、风险和最终审查关口，把实现与有边界的资料收集分配给合适的能力档位，同时保留审批、测试和验证纪律。
 
-它不统计 token 用量，不承诺节省结果，不验证模型或角色身份，也不替代工程判断。
+它可以显示 CodexBar 的本地 token 与估算成本摘要，但不自行扫描 session，不承诺节省结果，不验证模型或角色身份，也不替代工程判断。
 
 ## 为什么需要它
 
@@ -34,6 +34,18 @@ python3 plugins/model-economy/scripts/model_economy.py verify
 ```
 
 Windows 请将 `python3` 替换为 `py -3.11`。安装、升级、迁移和卸载详见[安装指南](docs/zh-CN/installation.md)。
+
+## 查看用量
+
+安装 CodexBar 0.41.0 或更高版本后，可以在不暴露账号凭据的情况下查看本地 Codex 用量：
+
+```sh
+python3 plugins/model-economy/scripts/model_economy.py usage
+python3 plugins/model-economy/scripts/model_economy.py usage --days 7 --project .
+python3 plugins/model-economy/scripts/model_economy.py usage --format json
+```
+
+适配器显示 CodexBar 的本地 token 总量、模型拆分与估算成本，不会把 token 归因到 Model Economy 角色。
 
 ## 任务分类
 
@@ -85,7 +97,7 @@ python3 plugins/model-economy/scripts/model_economy.py disable-global-routing
 
 ## 当前限制
 
-- 插件不计量或归因 token 使用量。
+- 用量摘要来自可选的 CodexBar 本地统计；Model Economy 不自行扫描 session，也不把 token 归因到角色。
 - `doctor --smoke` 不验证角色或模型身份。
 - 插件不安装或替代 Superpowers；需要其流程时请单独提供。
 - 全局路由不带项目特定上下文，插件卸载时也不会自动删除。

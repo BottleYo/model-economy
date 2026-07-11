@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "classification_order": [
     "large_or_high_risk",
     "mechanical",
@@ -13,6 +13,10 @@
       "match": {
         "operator": "any",
         "predicates": ["high_risk", "new_architecture", "wide_blast_radius"]
+      },
+      "primary_execution": {
+        "selection": "exactly_one",
+        "choices": ["main_agent", "model-economy-implementer"]
       },
       "base_allowed_roles": [
         "model-economy-implementer",
@@ -49,6 +53,10 @@
           "bounded_explicit_failure"
         ]
       },
+      "primary_execution": {
+        "selection": "exactly_one",
+        "choices": ["model-economy-batch-worker"]
+      },
       "base_allowed_roles": ["model-economy-batch-worker"],
       "conditional_roles": [],
       "required_roles": [],
@@ -72,6 +80,10 @@
           "not_creative_or_behavioral_change"
         ]
       },
+      "primary_execution": {
+        "selection": "exactly_one",
+        "choices": ["main_agent"]
+      },
       "base_allowed_roles": [],
       "conditional_roles": [],
       "required_roles": [],
@@ -91,12 +103,39 @@
         "operator": "default",
         "predicates": []
       },
+      "primary_execution": {
+        "selection": "exactly_one",
+        "choices": ["main_agent", "model-economy-implementer"]
+      },
       "base_allowed_roles": [
-        "model-economy-implementer",
-        "model-economy-reviewer",
-        "model-economy-explorer"
+        "model-economy-implementer"
       ],
       "conditional_roles": [
+        {
+          "role": "model-economy-explorer",
+          "when": {
+            "operator": "any",
+            "predicates": [
+              "file_location_uncertain",
+              "dependency_relationship_uncertain",
+              "existing_facts_uncertain"
+            ]
+          },
+          "output": "minimal_facts"
+        },
+        {
+          "role": "model-economy-reviewer",
+          "when": {
+            "operator": "any",
+            "predicates": [
+              "cross_module_change",
+              "critical_logic_change",
+              "non_obvious_regression_risk",
+              "material_test_coverage_doubt"
+            ]
+          },
+          "output": "independent_findings"
+        },
         {
           "role": "model-economy-architect",
           "when": {
@@ -106,7 +145,11 @@
           "output": "diagnostic_decision",
           "after_completion": {
             "implementation_capability": "balanced",
-            "reclassify_when": "large_or_high_risk_discovered"
+            "reclassify_when": "large_or_high_risk_discovered",
+            "counts_as_large_architect_when": [
+              "before_new_design_approval",
+              "large_architect_output_contract_satisfied"
+            ]
           }
         }
       ],
@@ -199,7 +242,9 @@
     "placeholder_format": "[REDACTED_<TYPE>]"
   },
   "delegation": {
+    "max_subagent_starts_per_task": 3,
     "max_concurrent_subagents": 3,
+    "reclassification_resets_budget": false,
     "recursive_delegation": "forbidden",
     "write_file_sets": {
       "must_be_mutually_exclusive": true,

@@ -9,7 +9,7 @@
 | 广泛爆炸半径 | large_or_high_risk | model-economy-implementer；model-economy-explorer | — | model-economy-architect；model-economy-final-reviewer | model-economy-reviewer；model-economy-batch-worker | 2 |
 | 已批准规格内的批量改名 | mechanical | model-economy-batch-worker | — | — | model-economy-architect；model-economy-final-reviewer；model-economy-implementer；model-economy-reviewer；model-economy-explorer | 0 |
 | 已知文件的纯字面修正 | simple | — | — | — | model-economy-architect；model-economy-final-reviewer；model-economy-implementer；model-economy-reviewer；model-economy-explorer；model-economy-batch-worker | 0 |
-| 跨模块、边界明确的低风险功能 | standard | model-economy-implementer；model-economy-reviewer；model-economy-explorer | model-economy-architect | — | model-economy-final-reviewer；model-economy-batch-worker | 1 |
-| 标准任务两次实质失败 | standard | model-economy-implementer；model-economy-reviewer；model-economy-explorer | model-economy-architect | — | model-economy-final-reviewer；model-economy-batch-worker | 1 |
+| 跨模块、边界明确的低风险功能 | standard | model-economy-implementer | model-economy-architect；model-economy-reviewer；model-economy-explorer | — | model-economy-final-reviewer；model-economy-batch-worker | 1 |
+| 标准任务两次实质失败 | standard | model-economy-implementer | model-economy-architect；model-economy-reviewer；model-economy-explorer | — | model-economy-final-reviewer；model-economy-batch-worker | 1 |
 
-标准分类中的 architect 不是基础角色，只在 `failed_attempts >= 2` 时最多调用一次。architect 返回诊断决策后由 `balanced` 实施；若诊断发现大型/高风险，重新按 `classification_order` 分类。大型/高风险的 architect 和 final-reviewer 分别是设计审批与任务结束的完成门。
+标准分类中的 explorer、reviewer 和 architect 都是条件角色；architect 只在 `failed_attempts >= 2` 时最多调用一次。architect 返回诊断决策后由 `balanced` 实施；若诊断发现大型/高风险，重新按 `classification_order` 分类但不重置三次 subagent 启动预算。大型/高风险的 architect 和 final-reviewer 分别是设计审批与任务结束的完成门。

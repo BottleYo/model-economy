@@ -72,7 +72,7 @@ class SkillContractTests(unittest.TestCase):
     def test_policy_has_ordered_first_match_classification_and_default_fallback(self):
         policy = load_policy()
 
-        self.assertEqual(policy["schema_version"], 2)
+        self.assertEqual(policy["schema_version"], 3)
         self.assertEqual(
             policy["classification_order"],
             ["large_or_high_risk", "mechanical", "simple", "standard"],
@@ -85,6 +85,7 @@ class SkillContractTests(unittest.TestCase):
                 {
                     "label",
                     "match",
+                    "primary_execution",
                     "base_allowed_roles",
                     "conditional_roles",
                     "required_roles",
@@ -176,12 +177,12 @@ class SkillContractTests(unittest.TestCase):
                 "strong_max": 0,
             },
             "standard": {
-                "base": {
-                    "model-economy-implementer",
+                "base": {"model-economy-implementer"},
+                "conditional": {
+                    "model-economy-architect",
                     "model-economy-reviewer",
                     "model-economy-explorer",
                 },
-                "conditional": {"model-economy-architect"},
                 "required": set(),
                 "forbidden": {
                     "model-economy-final-reviewer",
@@ -213,20 +214,75 @@ class SkillContractTests(unittest.TestCase):
         standard = load_policy()["task_classes"]["standard"]
 
         self.assertNotIn("model-economy-architect", standard["base_allowed_roles"])
+        architect = next(
+            entry
+            for entry in standard["conditional_roles"]
+            if entry["role"] == "model-economy-architect"
+        )
+        self.assertEqual(architect["when"], {"failed_attempts": {"gte": 2}})
+        self.assertEqual(architect["max_calls"], 1)
+        self.assertEqual(architect["output"], "diagnostic_decision")
         self.assertEqual(
-            standard["conditional_roles"],
-            [
-                {
-                    "role": "model-economy-architect",
-                    "when": {"failed_attempts": {"gte": 2}},
-                    "max_calls": 1,
-                    "output": "diagnostic_decision",
-                    "after_completion": {
-                        "implementation_capability": "balanced",
-                        "reclassify_when": "large_or_high_risk_discovered",
-                    },
-                }
-            ],
+            architect["after_completion"],
+            {
+                "implementation_capability": "balanced",
+                "reclassify_when": "large_or_high_risk_discovered",
+                "counts_as_large_architect_when": [
+                    "before_new_design_approval",
+                    "large_architect_output_contract_satisfied",
+                ],
+            },
+        )
+
+    def test_standard_optional_roles_have_machine_readable_conditions(self):
+        standard = load_policy()["task_classes"]["standard"]
+        conditional = {entry["role"]: entry for entry in standard["conditional_roles"]}
+
+        self.assertEqual(
+            conditional["model-economy-explorer"]["when"],
+            {
+                "operator": "any",
+                "predicates": [
+                    "file_location_uncertain",
+                    "dependency_relationship_uncertain",
+                    "existing_facts_uncertain",
+                ],
+            },
+        )
+        self.assertEqual(
+            conditional["model-economy-reviewer"]["when"],
+            {
+                "operator": "any",
+                "predicates": [
+                    "cross_module_change",
+                    "critical_logic_change",
+                    "non_obvious_regression_risk",
+                    "material_test_coverage_doubt",
+                ],
+            },
+        )
+
+    def test_primary_execution_is_exactly_one_and_machine_readable(self):
+        classes = load_policy()["task_classes"]
+
+        self.assertEqual(
+            classes["standard"]["primary_execution"],
+            {
+                "selection": "exactly_one",
+                "choices": ["main_agent", "model-economy-implementer"],
+            },
+        )
+        self.assertEqual(
+            classes["large_or_high_risk"]["primary_execution"],
+            {
+                "selection": "exactly_one",
+                "choices": ["main_agent", "model-economy-implementer"],
+            },
+        )
+        self.assertEqual(classes["simple"]["primary_execution"]["choices"], ["main_agent"])
+        self.assertEqual(
+            classes["mechanical"]["primary_execution"]["choices"],
+            ["model-economy-batch-worker"],
         )
 
     def test_large_required_roles_are_completion_gates(self):
@@ -323,6 +379,30 @@ class SkillContractTests(unittest.TestCase):
 
         self.assertTrue(write_sets["must_be_mutually_exclusive"])
         self.assertEqual(write_sets["overlap_handling"], "main_agent_serializes")
+
+    def test_subagent_budget_counts_total_starts_and_survives_reclassification(self):
+        delegation = load_policy()["delegation"]
+
+        self.assertEqual(delegation["max_subagent_starts_per_task"], 3)
+        self.assertEqual(delegation["max_concurrent_subagents"], 3)
+        self.assertFalse(delegation["reclassification_resets_budget"])
+        self.assertEqual(delegation["recursive_delegation"], "forbidden")
+
+    def test_skill_defines_single_orchestration_authority_and_evidence_layers(self):
+        skill = SKILL.read_text(encoding="utf-8")
+        context = CONTEXT_CONTRACT.read_text(encoding="utf-8")
+
+        self.assertIn("按指令优先级只选择一套代理编排", skill)
+        self.assertIn("subagent-driven-development", skill)
+        self.assertIn("不得增加所选路由之外", skill)
+        self.assertIn("主 agent 或一个 `model-economy-implementer`", skill)
+        self.assertIn("变更评估", skill)
+        self.assertIn("残余交付风险", skill)
+        self.assertIn("新鲜验证证据", skill)
+        self.assertIn("非目标：", context)
+        self.assertIn("验证命令：", context)
+        self.assertIn("实际启动：未记录", context)
+        self.assertIn("模型身份：未验证", context)
 
     def test_role_matrix_matches_policy_capabilities(self):
         policy = load_policy()

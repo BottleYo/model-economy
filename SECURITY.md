@@ -14,7 +14,7 @@ Include the affected version, reproduction steps, impact, and an optional remedi
 
 ## Trust boundaries
 
-The CLI manages Model Economy configuration, declared agent files under `CODEX_HOME`, and the marked, managed Model Economy block in `$CODEX_HOME/AGENTS.md`; it does not manage credentials or validate model and role identity. Configuration corruption or ownership conflicts fail closed. Only an explicit user-authorized `--force` operation overrides the relevant ownership or conflict guard. Details are in the [README](README.md).
+The CLI manages Model Economy configuration, declared agent files under `CODEX_HOME`, and the marked, managed Model Economy block in `$CODEX_HOME/AGENTS.md`; it does not manage credentials or validate model and role identity. The optional `usage` command executes a user-selected CodexBar CLI and exposes only a bounded field whitelist; Model Economy does not read CodexBar credentials or session files directly, but cannot guarantee the third-party executable's internal behavior. Configuration corruption or ownership conflicts fail closed. Only an explicit user-authorized `--force` operation overrides the relevant ownership or conflict guard. Details are in the [README](README.md).
 
 ## Release checks
 

@@ -14,7 +14,12 @@ ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "plugins" / "model-economy" / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
-from model_economy_lib.doctor import find_codex, run_doctor, run_smoke  # noqa: E402
+from model_economy_lib.doctor import (  # noqa: E402
+    find_codex,
+    run_doctor,
+    run_smoke,
+    verify_installation,
+)
 from model_economy_lib.lifecycle import Context, install  # noqa: E402
 from model_economy_lib.models import Profile  # noqa: E402
 from model_economy_lib.profiles import load_profile  # noqa: E402
@@ -79,6 +84,14 @@ class DoctorTests(unittest.TestCase):
             report = run_doctor(self.context)
         self.assertFalse(report.ok)
         self.assertFalse(report.checks["role_hashes"])
+
+    def test_verification_rejects_installed_template_version_drift(self):
+        newer_context = Context(self.home, self.plugin_root, "0.2.0")
+
+        report = verify_installation(newer_context)
+
+        self.assertFalse(report.ok)
+        self.assertFalse(report.checks["template_version"])
 
     def test_verification_checks_rendered_role_models_against_config_mapping(self):
         install(

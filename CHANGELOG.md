@@ -4,6 +4,14 @@
 
 This project follows Semantic Versioning. Notable changes are recorded here.
 
+## 0.3.0 - 2026-07-11
+
+- Added an optional CodexBar 0.41.0-or-later adapter for local token totals, model breakdowns, project filtering, calendar windows, and estimated cost.
+- Added bounded JSON and subprocess handling without reading Codex or CodexBar credentials or session files directly.
+- Made standard-task explorer and reviewer roles conditional, added a three-start task budget, and encoded primary-executor exclusivity.
+- Clarified single-orchestration precedence between Model Economy and Superpowers, distinct review evidence layers, and minimal delegation context.
+- Made `verify` reject installed role templates from an older plugin version until they are upgraded.
+
 ## 0.2.0 - 2026-07-11
 
 - Added `enable-global-routing` and `disable-global-routing` to manage a global `AGENTS.md` development-routing block safely and idempotently.

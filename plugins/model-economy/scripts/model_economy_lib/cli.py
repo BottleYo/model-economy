@@ -1,6 +1,7 @@
 """Command-line orchestration for Model Economy's local lifecycle."""
 
 import argparse
+import json
 import os
 from pathlib import Path
 import sys
@@ -13,6 +14,15 @@ from .global_routing import disable_global_routing, enable_global_routing
 from .lifecycle import ChangeSet, ConflictError, Context, install, plan_upgrade, uninstall, upgrade
 from .models import Profile
 from .profiles import load_profile
+from .usage import (
+    UsageError as UsageDataError,
+    UsageSummary,
+    check_codexbar_version,
+    discover_codexbar,
+    fetch_usage,
+    summarize_usage,
+    usage_to_dict,
+)
 
 
 SUCCESS = 0
@@ -49,6 +59,16 @@ def _add_location_options(parser: argparse.ArgumentParser, *, suppressed: bool =
     default = argparse.SUPPRESS if suppressed else None
     parser.add_argument("--codex-home", type=Path, default=default)
     parser.add_argument("--codex-bin", default=default)
+
+
+def _days_value(value: str) -> int:
+    try:
+        days = int(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError("天数必须是整数") from exc
+    if not 1 <= days <= 365:
+        raise argparse.ArgumentTypeError("天数必须在 1 到 365 之间")
+    return days
 
 
 def _build_parser() -> Parser:
@@ -94,6 +114,11 @@ def _build_parser() -> Parser:
     uninstall_parser.add_argument("--force", action="store_true")
     command("enable-global-routing")
     command("disable-global-routing")
+    usage_parser = command("usage")
+    usage_parser.add_argument("--project", type=Path)
+    usage_parser.add_argument("--days", type=_days_value, default=30)
+    usage_parser.add_argument("--format", choices=("text", "json"), default="text")
+    usage_parser.add_argument("--codexbar-bin", type=Path)
     return parser
 
 
@@ -103,7 +128,7 @@ def _context(codex_home: Path | None) -> Context:
         if codex_home is not None
         else resolve_codex_home(os.environ)
     )
-    return Context(home, PLUGIN_ROOT, "0.2.0")
+    return Context(home, PLUGIN_ROOT, "0.3.0")
 
 
 def _load_bundled_profile(name: str) -> Profile:
@@ -153,6 +178,39 @@ def _print_smoke(smoke: SmokeReport) -> None:
     print("模型身份：未验证")
 
 
+def _number(value: int | None) -> str:
+    return "不可用" if value is None else f"{value:,}"
+
+
+def _print_usage(summary: UsageSummary) -> None:
+    scope = f"最近 {summary.range_days} 天"
+    if summary.project:
+        scope += f" · {summary.project}"
+    print("来源：CodexBar（本地统计，成本为估算）")
+    print(f"范围：{scope}")
+    print(f"总 token：{_number(summary.tokens.total)}")
+    print(
+        f"输入：{_number(summary.tokens.input)} · "
+        f"输出：{_number(summary.tokens.output)} · "
+        f"缓存读取：{_number(summary.tokens.cache_read)} · "
+        f"缓存创建：{_number(summary.tokens.cache_creation)}"
+    )
+    if summary.estimated_cost is None or summary.currency is None:
+        print("估算成本：不可用")
+    else:
+        print(f"估算成本：{summary.currency} {summary.estimated_cost:.2f}")
+    if summary.models:
+        models = []
+        for model in summary.models:
+            tokens = _number(model.total_tokens)
+            cost = "不可用" if model.estimated_cost is None else f"{model.estimated_cost:.2f}"
+            models.append(f"{model.name} {tokens} token / 估算成本 {cost}")
+        print("模型：" + "；".join(models))
+    else:
+        print("模型：不可用")
+    print("角色归因：不可用")
+
+
 def _run(args: argparse.Namespace) -> int:
     context = _context(args.codex_home)
     if args.command == "install":
@@ -200,6 +258,16 @@ def _run(args: argparse.Namespace) -> int:
     if args.command == "disable-global-routing":
         _print_changes(disable_global_routing(context.codex_home / "AGENTS.md"))
         return SUCCESS
+    if args.command == "usage":
+        binary = discover_codexbar(args.codexbar_bin)
+        check_codexbar_version(binary)
+        payload = fetch_usage(binary, days=args.days)
+        summary = summarize_usage(payload, project=args.project, days=args.days)
+        if args.format == "json":
+            print(json.dumps(usage_to_dict(summary), ensure_ascii=False, indent=2, sort_keys=True))
+        else:
+            _print_usage(summary)
+        return SUCCESS
     raise UsageError("未知命令")
 
 
@@ -216,6 +284,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     except ConflictError as exc:
         print(f"冲突：{exc}", file=sys.stderr)
         return CONFLICT
+    except UsageDataError as exc:
+        print(f"失败：{exc}", file=sys.stderr)
+        return ENVIRONMENT_FAILURE
     except (ConfigError, OSError, ValueError) as exc:
         print(f"失败：{exc}", file=sys.stderr)
         return ENVIRONMENT_FAILURE

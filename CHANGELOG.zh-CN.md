@@ -4,6 +4,14 @@
 
 本项目遵循语义化版本；显著变更记录在本文件。
 
+## 0.3.0 - 2026-07-11
+
+- 新增可选的 CodexBar 0.41.0 或更高版本适配器，用于查看本地 token 总量、模型拆分、项目筛选、日历窗口和估算成本。
+- 为 JSON 和子进程增加资源边界，不直接读取 Codex 或 CodexBar 的凭据与 session 文件。
+- 将标准任务的 explorer 与 reviewer 改为条件角色，增加每任务三次启动预算，并用机器策略表达主要执行者互斥。
+- 明确 Model Economy 与 Superpowers 的单一编排优先级、不同审查证据层和最小委派上下文。
+- `verify` 会拒绝旧插件版本生成的角色模板，直到完成升级。
+
 ## 0.2.0 - 2026-07-11
 
 - 新增 `enable-global-routing` 与 `disable-global-routing`，以安全、幂等的方式管理全局 `AGENTS.md` 开发路由块。

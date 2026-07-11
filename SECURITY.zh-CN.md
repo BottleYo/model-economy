@@ -14,7 +14,7 @@
 
 ## 信任边界
 
-CLI 只管理 `CODEX_HOME` 下的 Model Economy 配置、已声明角色文件，以及 `$CODEX_HOME/AGENTS.md` 中带标记的 Model Economy 受管理区块；它不管理凭据，也不验证模型或角色身份。配置损坏或归属冲突会失败关闭。只有用户明确授权的 `--force` 操作可以越过相应的归属或冲突保护。详细说明见[README](README.zh-CN.md)。
+CLI 只管理 `CODEX_HOME` 下的 Model Economy 配置、已声明角色文件，以及 `$CODEX_HOME/AGENTS.md` 中带标记的 Model Economy 受管理区块；它不管理凭据，也不验证模型或角色身份。可选的 `usage` 命令会执行用户选定的 CodexBar CLI，并只公开受资源边界保护的字段白名单；Model Economy 不直接读取 CodexBar 凭据或 session 文件，但不能替第三方可执行文件保证内部行为。配置损坏或归属冲突会失败关闭。只有用户明确授权的 `--force` 操作可以越过相应的归属或冲突保护。详细说明见[README](README.zh-CN.md)。
 
 ## 发布检查
 

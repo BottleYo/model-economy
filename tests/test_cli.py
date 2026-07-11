@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 import tempfile
@@ -16,6 +17,12 @@ from model_economy_lib.cli import main  # noqa: E402
 from model_economy_lib.doctor import DoctorReport, SmokeReport  # noqa: E402
 from model_economy_lib.global_routing import END_MARKER, START_MARKER  # noqa: E402
 from model_economy_lib.models import ROLES  # noqa: E402
+from model_economy_lib.usage import (  # noqa: E402
+    ModelTotal,
+    TokenTotals,
+    UsageError as UsageDataError,
+    UsageSummary,
+)
 
 
 class CliTests(unittest.TestCase):
@@ -235,6 +242,104 @@ class CliTests(unittest.TestCase):
             "角色身份：未验证（当前 Codex JSONL 不含 agent_type）",
             "模型身份：未验证",
         ])
+
+    def usage_summary(self, project=None):
+        return UsageSummary(
+            project=project,
+            range_days=7,
+            tokens=TokenTotals(
+                input=12000,
+                output=345,
+                cache_read=9000,
+                cache_creation=None,
+                total=12345,
+            ),
+            estimated_cost=12.34,
+            currency="USD",
+            models=(ModelTotal("balanced-model", 12345, 12.34),),
+        )
+
+    def test_usage_json_is_stable_and_hides_project_parent(self):
+        project = Path(self.temporary_directory.name) / "private-parent" / "project-name"
+        output = StringIO()
+        with patch("model_economy_lib.cli.discover_codexbar", return_value=Path("/bin/tool")), patch(
+            "model_economy_lib.cli.check_codexbar_version", return_value=(0, 41, 0)
+        ), patch("model_economy_lib.cli.fetch_usage", return_value={"provider": "codex"}), patch(
+            "model_economy_lib.cli.summarize_usage",
+            return_value=self.usage_summary("project-name"),
+        ) as summarize, redirect_stdout(output):
+            code = main(
+                [
+                    "usage",
+                    "--project",
+                    str(project),
+                    "--days",
+                    "7",
+                    "--format",
+                    "json",
+                    "--codexbar-bin",
+                    "/bin/tool",
+                ]
+            )
+
+        self.assertEqual(code, 0)
+        payload = json.loads(output.getvalue())
+        self.assertEqual(payload["usage_schema_version"], 1)
+        self.assertEqual(payload["project"], "project-name")
+        self.assertNotIn(str(project.parent), output.getvalue())
+        summarize.assert_called_once_with(
+            {"provider": "codex"}, project=project, days=7
+        )
+
+    def test_usage_text_marks_cost_and_role_attribution_limits(self):
+        output = StringIO()
+        with patch("model_economy_lib.cli.discover_codexbar", return_value=Path("/bin/tool")), patch(
+            "model_economy_lib.cli.check_codexbar_version", return_value=(0, 41, 0)
+        ), patch("model_economy_lib.cli.fetch_usage", return_value=[]), patch(
+            "model_economy_lib.cli.summarize_usage", return_value=self.usage_summary()
+        ), redirect_stdout(output):
+            code = main(["usage", "--days", "7"])
+
+        self.assertEqual(code, 0)
+        self.assertIn("来源：CodexBar（本地统计，成本为估算）", output.getvalue())
+        self.assertIn("总 token：12,345", output.getvalue())
+        self.assertIn("估算成本：USD 12.34", output.getvalue())
+        self.assertIn("角色归因：不可用", output.getvalue())
+
+    def test_usage_text_preserves_missing_values(self):
+        summary = UsageSummary(
+            project=None,
+            range_days=30,
+            tokens=TokenTotals(None, None, None, None, None),
+            estimated_cost=None,
+            currency=None,
+            models=(),
+        )
+        output = StringIO()
+        with patch("model_economy_lib.cli.discover_codexbar", return_value=Path("/bin/tool")), patch(
+            "model_economy_lib.cli.check_codexbar_version", return_value=(0, 41, 0)
+        ), patch("model_economy_lib.cli.fetch_usage", return_value=[]), patch(
+            "model_economy_lib.cli.summarize_usage", return_value=summary
+        ), redirect_stdout(output):
+            code = main(["usage"])
+
+        self.assertEqual(code, 0)
+        self.assertIn("总 token：不可用", output.getvalue())
+        self.assertIn("估算成本：不可用", output.getvalue())
+
+    def test_usage_days_out_of_range_returns_parameter_error(self):
+        for value in ("0", "366", "not-a-number"):
+            with self.subTest(value=value):
+                self.assertEqual(main(["usage", "--days", value]), 64)
+
+    def test_usage_dependency_failure_does_not_affect_other_commands(self):
+        with patch(
+            "model_economy_lib.cli.discover_codexbar",
+            side_effect=UsageDataError("未找到 CodexBar"),
+        ):
+            self.assertEqual(main(["usage"]), 1)
+
+        self.assertEqual(main(["--codex-home", str(self.home), "verify", "--quiet"]), 1)
 
 
 if __name__ == "__main__":

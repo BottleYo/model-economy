@@ -90,6 +90,7 @@ def verify_installation(context: Context) -> VerificationReport:
         "role_hashes": False,
         "config_hash": False,
         "model_mapping": False,
+        "template_version": False,
     }
     try:
         config = load_config(context.config_path)
@@ -109,6 +110,7 @@ def verify_installation(context: Context) -> VerificationReport:
     checks["model_mapping"] = set(config.models) in (set(), {"strong", "balanced", "economy"}) and (
         _role_models_match(config.models, role_paths)
     )
+    checks["template_version"] = state.template_version == context.template_version
     return VerificationReport(all(checks.values()), checks)
 
 

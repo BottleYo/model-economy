@@ -77,6 +77,16 @@ python3 plugins/model-economy/scripts/model_economy.py disable-global-routing
 
 两个命令只会添加或删除 `$CODEX_HOME/AGENTS.md` 中 Model Economy 的受管理块。
 
+## `usage`
+
+```sh
+python3 plugins/model-economy/scripts/model_economy.py usage [--days 1..365] [--project <path>] [--format text|json] [--codexbar-bin <path>]
+```
+
+读取 CodexBar 0.41.0 或更高版本的本地成本 JSON。默认范围为最近 30 个日历日。`--project` 精确选择项目路径，但公开输出只保留目录名。`--format json` 输出 Model Economy 稳定的 `usage_schema_version: 1` 封装。
+
+CodexBar 是可选的第三方本地程序。Model Economy 不读取其凭据或 session 文件，但不能替 CodexBar 保证内部行为。成本是 CodexBar 估算值；角色归因和模型身份仍未验证。macOS 与 Linux 支持常规 CLI 发现；Windows 需要通过 `--codexbar-bin` 或 `CODEXBAR_BIN` 显式提供兼容可执行文件。
+
 ## 退出码
 
 | 代码 | 含义 |
