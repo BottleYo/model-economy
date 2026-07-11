@@ -99,12 +99,12 @@ class RendererTests(unittest.TestCase):
             'name = "inherited"\ninherit_model = true\n[models]\nstrong = "a"\n',
             'name = "incomplete"\ninherit_model = false\n[models]\nstrong = "a"\nbalanced = "b"\n',
         )
-        for contents in invalid_profiles:
-            with self.subTest(contents=contents), tempfile.NamedTemporaryFile(mode="w", suffix=".toml") as handle:
-                handle.write(contents)
-                handle.flush()
-                with self.assertRaises(ValueError):
-                    load_profile(Path(handle.name))
+        with tempfile.TemporaryDirectory() as directory:
+            for index, contents in enumerate(invalid_profiles):
+                path = Path(directory) / f"invalid-{index}.toml"
+                path.write_text(contents, encoding="utf-8")
+                with self.subTest(contents=contents), self.assertRaises(ValueError):
+                    load_profile(path)
 
 
 if __name__ == "__main__":
