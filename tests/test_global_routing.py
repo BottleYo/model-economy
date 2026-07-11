@@ -59,6 +59,16 @@ class GlobalRoutingTextTests(unittest.TestCase):
         self.assertNotIn("## 旧规则", refreshed)
         self.assertEqual(disable_text(refreshed), "现有规则")
 
+    def test_managed_rule_defaults_to_native_and_requires_explicit_strict_handoff(self):
+        enabled = enable_text(None)
+
+        self.assertIn("安装、启用或发现 Superpowers 不构成", enabled)
+        self.assertIn("当前任务中明确要求", enabled)
+        self.assertIn("完整 Superpowers", enabled)
+        self.assertIn("full Superpowers", enabled)
+        self.assertIn("只提供模型与成本建议", enabled)
+        self.assertIn("不得启动自己的角色", enabled)
+
     def test_disable_without_markers_is_idempotent(self):
         self.assertEqual(disable_text("现有规则"), "现有规则")
         self.assertIsNone(disable_text(None))

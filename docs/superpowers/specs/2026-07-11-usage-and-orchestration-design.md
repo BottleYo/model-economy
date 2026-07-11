@@ -1,3 +1,5 @@
+> 历史文档：记录 0.3.0 的设计，已被 `docs/design/2026-07-11-native-quality-kernel.md` 取代，不代表当前运行规则。
+
 # Model Economy 用量观察与编排收敛设计
 
 ## 背景

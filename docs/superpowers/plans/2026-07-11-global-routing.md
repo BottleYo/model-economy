@@ -1,3 +1,5 @@
+> 历史文档：记录早期实施过程，已完成且不代表当前运行规则。
+
 # 全局开发路由实施计划
 
 > **面向代理工作者：** 必须使用 `superpowers:subagent-driven-development` 或 `superpowers:executing-plans` 按任务实施，并使用复选框跟踪步骤。

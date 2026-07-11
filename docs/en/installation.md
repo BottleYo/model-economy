@@ -71,6 +71,12 @@ python3 plugins/model-economy/scripts/model_economy.py disable-global-routing
 
 These commands manage only the Model Economy block in `$CODEX_HOME/AGENTS.md`. Enabling is idempotent; disabling restores the previous text outside the managed block. A project-level `AGENTS.md` can override the global instructions.
 
+## Coexisting with Superpowers
+
+Superpowers is not an installation dependency. Model Economy uses its native quality gates whether Superpowers is absent, disabled, or enabled. Enabling the plugin alone does not authorize the full Superpowers workflow.
+
+For a current task that needs full Superpowers, explicitly request “full Superpowers for this task” or “Superpowers strict mode.” Model Economy then provides model and cost advice only and does not start its own roles or append quality workflows. Authorization never persists across tasks. Model Economy does not install, toggle, or modify Superpowers.
+
 ## Upgrade
 
 `codex plugin marketplace upgrade` refreshes Git marketplace snapshots only; it does not refresh a marketplace added from a local path. Update the checkout, re-register the local marketplace, reinstall the plugin snapshot, then inspect and apply the managed-file upgrade:
@@ -83,9 +89,10 @@ codex plugin marketplace add .
 codex plugin add model-economy@model-economy-public
 python3 plugins/model-economy/scripts/model_economy.py upgrade --dry-run
 python3 plugins/model-economy/scripts/model_economy.py upgrade
+python3 plugins/model-economy/scripts/model_economy.py enable-global-routing
 ```
 
-`--force` overwrites a conflicting managed file. Resolve the diff first whenever possible.
+The final command idempotently refreshes the managed global rule with the 0.4.0 native default and strict handoff policy. `--force` overwrites a conflicting managed file. Resolve the diff first whenever possible.
 
 ## Export and import a profile
 

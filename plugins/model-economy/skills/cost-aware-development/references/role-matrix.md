@@ -6,7 +6,7 @@
 | --- | --- | --- | --- |
 | `model-economy-architect` | `strong`，只读 | 大型/高风险设计审批前的必需完成门；标准任务两次实质失败后的条件角色 | 只输出架构边界、风险、决策；不得写计划、补丁或代码 |
 | `model-economy-final-reviewer` | `strong`，只读 | 大型/高风险验证后的必需完成门 | 缺陷、证据缺口、剩余风险；完成复核前不得结束任务 |
-| `model-economy-implementer` | `balanced`，可写 | 已批准设计和计划后的实现、调试和测试 | 只改已声明且已获批的文件集合，按 TDD 实施 |
+| `model-economy-implementer` | `balanced`，可写 | 已明确范围内的实现、调试和风险匹配测试 | 只改已声明且已获批的文件集合，执行命中的原生质量门 |
 | `model-economy-reviewer` | `balanced`，只读 | 标准任务跨模块、触及关键逻辑、回归风险不直观或存在实质测试疑问时 | 对差异和测试给出反馈；不写计划、补丁或代码 |
 | `model-economy-explorer` | `economy`，只读 | 文件位置、依赖关系或现有事实不明确时做最小收集 | 最小文件清单、事实和约束；不做设计、计划或编辑 |
 | `model-economy-batch-worker` | `economy`，可写 | 全部机械任务条件满足的固定规则批量工作 | 固定规则编辑及逐项检查；不做设计、计划或语义判断 |

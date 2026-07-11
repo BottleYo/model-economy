@@ -4,6 +4,13 @@
 
 This project follows Semantic Versioning. Notable changes are recorded here.
 
+## 0.4.0 - 2026-07-11
+
+- Replaced runtime dependencies on Superpowers skills with risk-triggered intent, planning, testing, and evidence gates.
+- Clarified that installing or enabling Superpowers does not authorize its full workflow; only an explicit strict request for the current task hands off orchestration.
+- Stopped requiring design documents or durable plans for simple work, kept short plans for standard work, and scaled testing to behavioral risk.
+- Upgraded the managed global routing block with native defaults and per-task strict handoff while leaving other plugins untouched.
+
 ## 0.3.0 - 2026-07-11
 
 - Added an optional CodexBar 0.41.0-or-later adapter for local token totals, model breakdowns, project filtering, calendar windows, and estimated cost.

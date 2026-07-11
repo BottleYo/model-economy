@@ -71,6 +71,12 @@ python3 plugins/model-economy/scripts/model_economy.py disable-global-routing
 
 这两个命令只管理 `$CODEX_HOME/AGENTS.md` 中的 Model Economy 块。启用可重复执行；禁用会保留受管理块以外的原有文本。项目级 `AGENTS.md` 可以覆盖全局说明。
 
+## 与 Superpowers 共存
+
+Superpowers 不是安装依赖。未安装、已关闭或已开启 Superpowers 时，Model Economy 默认都使用自己的原生质量门。仅仅开启插件不会授权完整 Superpowers 流程。
+
+如果当前任务需要完整 Superpowers，请明确写出“本任务使用完整 Superpowers”或“Superpowers strict mode”。Model Economy 随后只提供模型与成本建议，不再启动自己的角色或追加质量流程。该授权不跨任务保存。Model Economy 不会安装、启停或修改 Superpowers。
+
 ## 升级
 
 `codex plugin marketplace upgrade` 只刷新 Git marketplace 快照，不能刷新从本地路径添加的 marketplace。请先更新仓库，再重新注册本地 marketplace、重新安装插件快照，最后查看并应用受管理文件升级：
@@ -83,9 +89,10 @@ codex plugin marketplace add .
 codex plugin add model-economy@model-economy-public
 python3 plugins/model-economy/scripts/model_economy.py upgrade --dry-run
 python3 plugins/model-economy/scripts/model_economy.py upgrade
+python3 plugins/model-economy/scripts/model_economy.py enable-global-routing
 ```
 
-`--force` 会覆盖冲突的受管理文件。通常应先处理差异。
+最后一条命令会幂等刷新受管理全局规则，使 0.4.0 的原生默认和 strict 交权规则生效。`--force` 会覆盖冲突的受管理文件。通常应先处理差异。
 
 ## 导出与导入档案
 

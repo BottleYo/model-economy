@@ -34,17 +34,25 @@ The counts are policy caps, not a promise that calls are available or that their
 
 The main agent retains classification, approval checks, write coordination, risk decisions, and final verification responsibility.
 
-## One orchestration authority
+## Native quality kernel
 
-Instruction priority selects one orchestration workflow. When Model Economy owns orchestration, it is the sole source for role topology, capability tiers, subagent budgets, and completion gates. Superpowers supplies methods such as brainstorming, planning, TDD, debugging, review technique, and evidence verification; it does not add a second agent workflow. A higher-priority instruction that mandates another workflow takes precedence, and Model Economy becomes advisory.
+Model Economy includes four conditional quality gates. The intent gate blocks implementation only for material ambiguity, high-risk decisions, or unapproved architecture boundaries. The planning gate lets simple work proceed directly, uses short plans for standard work, and reserves durable plans for large work. The testing gate scales test-first discipline or alternative checks to behavioral risk. The evidence gate requires fresh verification before completion.
+
+These gates are not a fixed pipeline. Clear goals and acceptance criteria do not require repeat design approval. Documentation, formatting, and deterministic configuration do not require formal TDD. Failed or unavailable verification must be disclosed.
+
+## One orchestration authority and Superpowers
+
+Instruction priority selects one orchestration workflow. Model Economy is the default source for role topology, capability tiers, subagent budgets, and completion gates. Installing, enabling, or discovering Superpowers does not authorize its full workflow.
+
+Model Economy hands off the current task only when the user explicitly requests “full Superpowers” or “Superpowers strict mode.” After handoff, Model Economy provides model and cost advice only. A request for one method such as test-first development, systematic debugging, or completion verification is not strict authorization, and handoff state never persists across tasks.
 
 For standard work, `explorer` is allowed only when file locations, dependencies, or existing facts are uncertain. `reviewer` is allowed only for cross-module or critical logic changes, non-obvious regression risk, or material test-coverage doubt. A task may start at most three subagents in total; reclassification does not reset that budget.
 
 ## Approval and verification
 
-Creative or behavioral changes require an approved design or traceable approval evidence before planning or implementation. Literal text-only edits and deterministic work fully contained in an approved specification are the exceptions.
+Traceable approval is required before implementation when goals are materially ambiguous, approaches produce materially different outcomes, a high-risk decision is involved, or an architecture boundary is unapproved. Clear acceptance criteria, reproducible bug fixes, approved-scope implementation, and deterministic work do not repeat approval.
 
-Approved implementation follows test-driven development. Before a completion claim, run the relevant fresh verification and inspect the result. Cost optimization never bypasses approval, testing, verification, or safety checks.
+Before a completion claim, run the relevant fresh verification and inspect the result. Cost optimization never bypasses necessary approval, risk-appropriate testing, verification, or safety checks.
 
 Review evaluates the change, final review evaluates residual delivery risk for large or high-risk work, and completion verification validates fresh evidence. These are distinct evidence layers rather than repeated full reviews.
 

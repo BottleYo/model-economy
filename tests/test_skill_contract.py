@@ -10,6 +10,7 @@ POLICY = SKILL_DIR / "references/routing-policy.json"
 ROLE_MATRIX = SKILL_DIR / "references/role-matrix.md"
 ROUTING_EXAMPLES = SKILL_DIR / "references/routing-examples.md"
 CONTEXT_CONTRACT = SKILL_DIR / "references/context-contract.md"
+QUALITY_GATES = SKILL_DIR / "references/quality-gates.md"
 
 
 def load_policy():
@@ -72,7 +73,7 @@ class SkillContractTests(unittest.TestCase):
     def test_policy_has_ordered_first_match_classification_and_default_fallback(self):
         policy = load_policy()
 
-        self.assertEqual(policy["schema_version"], 3)
+        self.assertEqual(policy["schema_version"], 4)
         self.assertEqual(
             policy["classification_order"],
             ["large_or_high_risk", "mechanical", "simple", "standard"],
@@ -305,18 +306,60 @@ class SkillContractTests(unittest.TestCase):
         )
         self.assertEqual(large["strong_max"], 2)
 
-    def test_approval_gate_blocks_creative_or_behavioral_work_without_evidence(self):
+    def test_approval_gate_blocks_ambiguous_or_high_risk_work_without_evidence(self):
         gate = load_policy()["approval_gate"]
 
-        self.assertEqual(gate["required_for"], ["creative_change", "behavior_change"])
+        self.assertEqual(
+            set(gate["required_when"]),
+            {
+                "material_ambiguity",
+                "materially_different_outcomes",
+                "high_risk_decision",
+                "unapproved_architecture_boundary",
+            },
+        )
         self.assertEqual(
             gate["required_evidence"], ["approved_design", "approval_evidence"]
         )
-        self.assertEqual(gate["forbidden_without_evidence"], ["planning", "implementation"])
+        self.assertEqual(gate["forbidden_without_evidence"], ["implementation"])
         self.assertEqual(
-            set(gate["exceptions"]),
-            {"literal_change", "mechanical_change_within_approved_spec"},
+            set(gate["not_repeated_when"]),
+            {
+                "clear_goal_constraints_and_acceptance",
+                "reproducible_bugfix",
+                "implementation_within_approved_design",
+                "literal_change",
+                "deterministic_mechanical_change",
+            },
         )
+
+    def test_machine_policy_declares_four_native_quality_gates(self):
+        self.assertEqual(
+            load_policy()["quality_gates"],
+            {
+                "intent": "conditional_before_implementation",
+                "planning": "scaled_by_task_class",
+                "testing": "scaled_by_behavioral_risk",
+                "evidence": "required_before_completion_claim",
+            },
+        )
+
+    def test_machine_policy_makes_strict_handoff_mutually_exclusive(self):
+        modes = load_policy()["orchestration_modes"]
+
+        self.assertEqual(modes["default"], "model_economy")
+        self.assertEqual(modes["selection_scope"], "current_task_only")
+        native = modes["modes"]["model_economy"]
+        strict = modes["modes"]["superpowers_strict"]
+        self.assertTrue(native["task_class_policy_applies"])
+        self.assertTrue(native["native_quality_gates_apply"])
+        self.assertEqual(native["model_economy_roles"], "per_task_class")
+        self.assertEqual(strict["trigger"]["operator"], "explicit_user_request")
+        self.assertIn("full Superpowers", strict["trigger"]["phrases"])
+        self.assertFalse(strict["task_class_policy_applies"])
+        self.assertFalse(strict["native_quality_gates_apply"])
+        self.assertEqual(strict["model_economy_roles"], "forbidden")
+        self.assertEqual(strict["model_economy_scope"], ["model_advice", "cost_advice"])
 
     def test_economy_work_requires_all_five_machine_checkable_conditions(self):
         conditions = load_policy()["economy_conditions"]
@@ -403,6 +446,34 @@ class SkillContractTests(unittest.TestCase):
         self.assertIn("验证命令：", context)
         self.assertIn("实际启动：未记录", context)
         self.assertIn("模型身份：未验证", context)
+
+    def test_native_quality_kernel_has_no_superpowers_skill_dependency(self):
+        skill = SKILL.read_text(encoding="utf-8")
+
+        self.assertNotIn("superpowers:", skill.lower())
+        self.assertIn("原生质量内核", skill)
+        self.assertIn("references/quality-gates.md", skill)
+
+    def test_quality_gates_are_risk_adaptive_and_complete(self):
+        quality = QUALITY_GATES.read_text(encoding="utf-8")
+
+        for gate in ("意图门", "计划门", "测试门", "证据门"):
+            self.assertIn(f"## {gate}", quality)
+        self.assertIn("简单任务", quality)
+        self.assertIn("不写持久化计划", quality)
+        self.assertIn("缺陷修复", quality)
+        self.assertIn("新鲜验证证据", quality)
+        self.assertIn("无法验证", quality)
+
+    def test_superpowers_strict_requires_explicit_current_task_authorization(self):
+        skill = SKILL.read_text(encoding="utf-8")
+
+        self.assertIn("安装、启用或发现 Superpowers 不构成", skill)
+        self.assertIn("当前任务", skill)
+        self.assertIn("完整 Superpowers", skill)
+        self.assertIn("full Superpowers", skill)
+        self.assertIn("只提供模型与成本建议", skill)
+        self.assertIn("不得启动 Model Economy 角色", skill)
 
     def test_role_matrix_matches_policy_capabilities(self):
         policy = load_policy()

@@ -6,7 +6,7 @@
 
 ![Model Economy](assets/social-preview.png)
 
-Model Economy is a Codex plugin for capability-aware development workflows. It keeps high-capability models at design, risk, and final-review gates; routes implementation and bounded research to suitable lower-cost capability tiers; and retains approval, testing, and verification discipline.
+Model Economy is a Codex plugin for capability-aware development workflows. It keeps high-capability models at design, risk, and final-review gates; routes implementation and bounded research to suitable lower-cost capability tiers; and applies native lightweight quality gates for approval, planning, testing, and verification.
 
 It can display local CodexBar token and estimated-cost summaries. It does not scan sessions itself, promise savings, verify model or role identity, or replace engineering judgment.
 
@@ -14,13 +14,16 @@ It can display local CodexBar token and estimated-cost summaries. It does not sc
 
 - Reserve `strong` capability for consequential decisions instead of routine edits.
 - Match investigation, implementation, review, and fixed-rule batch work to explicit role boundaries.
-- Keep design approval, test-first implementation, and fresh verification as required gates.
+- Require approval only for material ambiguity or high-risk decisions, and scale testing to behavioral risk.
+- Always require fresh completion evidence without forcing a full methodology onto simple work.
 
 ## How it works
 
 ![Model Economy task flow](assets/model-economy-flow-en.svg)
 
 Tasks are classified in a fixed order: large or high-risk, mechanical, simple, then standard. The first matching class decides the permitted roles and the maximum number of `strong` calls. See [how it works](docs/en/how-it-works.md) for the complete policy.
+
+Superpowers is not a dependency. Even when it is installed or enabled, Model Economy remains the default workflow. Handoff occurs only when the user explicitly requests “full Superpowers” or “Superpowers strict mode” for the current task.
 
 ## Install in 60 seconds
 
@@ -99,7 +102,7 @@ The local CLI manages only its configuration, its declared agent files under `CO
 
 - Usage summaries come from optional CodexBar local statistics; Model Economy does not scan sessions itself or attribute tokens to roles.
 - `doctor --smoke` does not verify role or model identity.
-- The plugin does not install or replace Superpowers; provide it separately when its workflows are required.
+- The plugin does not install, toggle, or modify Superpowers; it hands off orchestration only after explicit strict authorization for the current task.
 - Global routing does not include project-specific context and is not removed automatically by plugin uninstall.
 
 ## Contributing

@@ -1,5 +1,5 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "classification_order": [
     "large_or_high_risk",
     "mechanical",
@@ -7,6 +7,33 @@
     "standard"
   ],
   "match_semantics": "first_match",
+  "orchestration_modes": {
+    "default": "model_economy",
+    "selection_scope": "current_task_only",
+    "modes": {
+      "model_economy": {
+        "trigger": "default",
+        "task_class_policy_applies": true,
+        "native_quality_gates_apply": true,
+        "model_economy_roles": "per_task_class"
+      },
+      "superpowers_strict": {
+        "trigger": {
+          "operator": "explicit_user_request",
+          "phrases": [
+            "完整 Superpowers",
+            "本任务使用完整 Superpowers",
+            "full Superpowers",
+            "Superpowers strict mode"
+          ]
+        },
+        "task_class_policy_applies": false,
+        "native_quality_gates_apply": false,
+        "model_economy_roles": "forbidden",
+        "model_economy_scope": ["model_advice", "cost_advice"]
+      }
+    }
+  },
   "task_classes": {
     "large_or_high_risk": {
       "label": "大型/高风险",
@@ -162,13 +189,27 @@
     }
   },
   "approval_gate": {
-    "required_for": ["creative_change", "behavior_change"],
+    "required_when": [
+      "material_ambiguity",
+      "materially_different_outcomes",
+      "high_risk_decision",
+      "unapproved_architecture_boundary"
+    ],
     "required_evidence": ["approved_design", "approval_evidence"],
-    "forbidden_without_evidence": ["planning", "implementation"],
-    "exceptions": {
-      "literal_change": "a text-only literal edit with no behavioral effect",
-      "mechanical_change_within_approved_spec": "a deterministic mechanical edit fully contained in an already approved specification"
-    }
+    "forbidden_without_evidence": ["implementation"],
+    "not_repeated_when": [
+      "clear_goal_constraints_and_acceptance",
+      "reproducible_bugfix",
+      "implementation_within_approved_design",
+      "literal_change",
+      "deterministic_mechanical_change"
+    ]
+  },
+  "quality_gates": {
+    "intent": "conditional_before_implementation",
+    "planning": "scaled_by_task_class",
+    "testing": "scaled_by_behavioral_risk",
+    "evidence": "required_before_completion_claim"
   },
   "economy_conditions": [
     {
