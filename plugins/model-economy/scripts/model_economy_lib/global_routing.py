@@ -89,10 +89,10 @@ def disable_text(text: str | None) -> str | None:
 
 
 def _read_text(path: Path) -> str | None:
-    if not path.exists():
-        return None
     if path.is_symlink():
         raise GlobalRoutingConflict("全局 AGENTS.md 不能是符号链接")
+    if not path.exists():
+        return None
     if path.stat().st_nlink > 1:
         raise GlobalRoutingConflict("全局 AGENTS.md 不能是多硬链接文件")
     try:

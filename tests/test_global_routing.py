@@ -116,10 +116,12 @@ class GlobalRoutingTextTests(unittest.TestCase):
             target.write_text("existing", encoding="utf-8")
             symlink = root / "symlink.md"
             symlink.symlink_to(target)
+            dangling = root / "dangling.md"
+            dangling.symlink_to(root / "missing.md")
             hardlink = root / "hardlink.md"
             os.link(target, hardlink)
 
-            for path in (symlink, hardlink):
+            for path in (symlink, dangling, hardlink):
                 with self.subTest(path=path), self.assertRaises(GlobalRoutingConflict):
                     enable_global_routing(path)
 
