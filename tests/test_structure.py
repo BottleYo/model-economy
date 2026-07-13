@@ -34,8 +34,12 @@ class StructureTests(unittest.TestCase):
 
     def test_readmes_share_the_public_information_architecture(self):
         expected_sections = (
+            "Why it exists",
+            "What makes it different",
+            "Model Economy vs full Superpowers",
             "How it works",
             "Install in 60 seconds",
+            "Use it on your terms",
             "Task classification",
             "Roles",
             "Global routing",
@@ -54,16 +58,27 @@ class StructureTests(unittest.TestCase):
         self.assertIn("assets/model-economy-flow-zh-CN.svg", chinese)
         self.assertIn("Use strong models for decisions, not routine work.", english)
         self.assertIn("让强模型负责关键判断，而不是日常机械工作", chinese)
+        self.assertIn("complete software development methodology", english)
+        self.assertIn("完整软件开发方法论", chinese)
+        self.assertIn("This task must not use Model Economy", english)
+        self.assertIn("本任务不要使用 Model Economy", chinese)
+        self.assertIn("at most three subagents", english)
+        self.assertIn("最多启动三个 subagent", chinese)
 
         last_index = -1
         for section in expected_sections:
-            index = english.index(section)
+            index = english.index(f"## {section}")
             self.assertGreater(index, last_index)
             last_index = index
 
+        last_index = -1
         for section in (
+            "为什么需要它",
+            "特别之处",
+            "Model Economy 与完整 Superpowers",
             "工作原理",
             "60 秒安装",
+            "按你的方式使用",
             "任务分类",
             "角色",
             "全局路由",
@@ -73,7 +88,20 @@ class StructureTests(unittest.TestCase):
             "贡献",
             "许可证",
         ):
-            self.assertIn(section, chinese)
+            index = chinese.index(f"## {section}")
+            self.assertGreater(index, last_index)
+            last_index = index
+
+    def test_readmes_compare_workflows_without_unsupported_adoption_claims(self):
+        english = (ROOT / "README.md").read_text(encoding="utf-8").lower()
+        chinese = (ROOT / "README.zh-CN.md").read_text(encoding="utf-8")
+
+        self.assertIn("https://github.com/obra/superpowers", english)
+        self.assertIn("https://github.com/obra/superpowers", chinese)
+        self.assertNotIn("abandoned", english)
+        self.assertNotIn("being abandoned", english)
+        self.assertNotIn("被抛弃", chinese)
+        self.assertNotIn("没人再用", chinese)
 
     def test_each_bilingual_command_document_matches_cli_help(self):
         cli = ROOT / "plugins/model-economy/scripts/model_economy.py"

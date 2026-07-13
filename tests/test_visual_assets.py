@@ -157,6 +157,18 @@ class VisualAssetTests(unittest.TestCase):
         self.assertIn("BITMAP_FONT", source)
         self.assertNotIn("ImageFont", source)
 
+    def test_social_preview_states_the_product_constraints(self):
+        sources = (
+            RENDER_SCRIPT.read_text(encoding="utf-8"),
+            (ROOT / "assets/social-preview.svg").read_text(encoding="utf-8"),
+        )
+
+        for source in sources:
+            self.assertIn("Rigor scales with risk.", source)
+            self.assertIn("Hard caps. One orchestrator.", source)
+            self.assertIn("STRONG 0/1/2", source)
+            self.assertIn("SUBAGENTS 3 MAX", source)
+
     def test_social_preview_badge_labels_fit_their_bounds(self):
         renderer = load_renderer()
         badges = getattr(renderer, "PREVIEW_BADGES", ())

@@ -22,6 +22,10 @@ PALETTE = (
     (0xF6, 0xB7, 0x4D),
 )
 BITMAP_FONT = {
+    "0": "01110/10001/10011/10101/11001/10001/01110",
+    "1": "00100/01100/00100/00100/00100/00100/01110",
+    "2": "01110/10001/00001/00010/00100/01000/11111",
+    "3": "11110/00001/00001/01110/00001/00001/11110",
     "A": "01110/10001/10001/11111/10001/10001/10001",
     "B": "11110/10001/10001/11110/10001/10001/11110",
     "C": "01111/10000/10000/10000/10000/10000/01111",
@@ -171,12 +175,19 @@ def render(output: Path) -> None:
     for bounds, _, _ in PREVIEW_BADGES:
         draw.rounded_rectangle(bounds, radius=2, fill=AMBER)
     draw_bitmap_text(image, (80, 170), "MODEL ECONOMY", 8, TEXT, bold=True)
-    draw_bitmap_text(image, (84, 264), "Strong models for decisions.", 3, TEXT)
-    draw_bitmap_text(image, (84, 306), "Efficient models for execution.", 3, MUTED)
+    draw_bitmap_text(image, (84, 264), "Rigor scales with risk.", 3, TEXT)
+    draw_bitmap_text(image, (84, 306), "Hard caps. One orchestrator.", 3, MUTED)
     for (left, top, _, _), label, scale in PREVIEW_BADGES:
         draw_bitmap_text(image, (left + 12, top + 12), label, scale, BACKGROUND, bold=True)
     draw_bitmap_text(image, (588, 442), "BALANCED / EXECUTE", 2, TEAL, bold=True)
-    draw_bitmap_text(image, (80, 530), "Architecture · Implementation · Verification", 2, TEXT, bold=True)
+    draw_bitmap_text(
+        image,
+        (80, 530),
+        "STRONG 0/1/2 · SUBAGENTS 3 MAX · NATIVE GATES",
+        2,
+        TEXT,
+        bold=True,
+    )
     save_indexed_png(image, output)
 
 
