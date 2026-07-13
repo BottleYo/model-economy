@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title">
+  <title id="title">Model Economy routing mark</title>
+  <rect width="256" height="256" rx="48" fill="#171B1D"/>
+  <path fill="#F4F0E8" d="M48 60h84v24H48zM48 116h84v24H48zM48 172h84v24H48z"/>
+  <path fill="#4FA39C" d="M132 44h28v168h-28z"/>
+  <path fill="#E5A44A" d="M160 116h48v24h-48z"/>
+</svg>

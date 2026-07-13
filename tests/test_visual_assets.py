@@ -10,6 +10,8 @@ from PIL import Image
 
 
 ROOT = Path(__file__).resolve().parents[1]
+PLUGIN_ROOT = ROOT / "plugins/model-economy"
+PLUGIN_MANIFEST = PLUGIN_ROOT / ".codex-plugin/plugin.json"
 SVG_ASSETS = (
     "assets/model-economy-flow-en.svg",
     "assets/model-economy-flow-zh-CN.svg",
@@ -43,6 +45,37 @@ def load_renderer():
 
 
 class VisualAssetTests(unittest.TestCase):
+    def test_plugin_manifest_declares_self_contained_brand_assets(self):
+        import json
+
+        manifest = json.loads(PLUGIN_MANIFEST.read_text(encoding="utf-8"))
+        interface = manifest["interface"]
+        expected_assets = {
+            "composerIcon": "./assets/brand/composer-icon.svg",
+            "logo": "./assets/brand/logo.svg",
+            "logoDark": "./assets/brand/logo-dark.svg",
+        }
+
+        self.assertEqual(interface["brandColor"], "#1F6F6A")
+        for field, relative_path in expected_assets.items():
+            with self.subTest(field=field):
+                self.assertEqual(interface[field], relative_path)
+                path = PLUGIN_ROOT / relative_path.removeprefix("./")
+                self.assertTrue(path.is_file(), f"missing plugin brand asset: {relative_path}")
+                source = path.read_text(encoding="utf-8")
+                root = ET.fromstring(source)
+                self.assertEqual(root.tag, "{http://www.w3.org/2000/svg}svg")
+                self.assertTrue(root.attrib.get("viewBox"))
+                for prohibited in (
+                    "linearGradient",
+                    "radialGradient",
+                    "<image",
+                    "<script",
+                    "href=",
+                    "<text",
+                ):
+                    self.assertNotIn(prohibited, source)
+
     def test_svg_assets_are_parseable_and_self_contained(self):
         prohibited = ("linearGradient", "radialGradient", "filter")
 
