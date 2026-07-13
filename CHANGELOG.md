@@ -10,6 +10,7 @@ This project follows Semantic Versioning. Notable changes are recorded here.
 - Kept leaf skills at zero subagent starts with no task-classification, model-routing, or commit authority; production implementation remains under Model Economy's single orchestration authority.
 - Added isolation and explicit bans on real accounts, external writes, destructive side effects, and all credential sources for disposable prototypes.
 - Encoded lightweight triggers and outputs in the machine routing policy while keeping the six roles and `strong` limits unchanged.
+- Allowed the exact GitHub service identity `noreply@github.com` in sensitive-content scans to avoid false positives on synthetic PR merge commits while continuing to reject other domain addresses and spoofed suffixes.
 
 ## 0.4.0 - 2026-07-11
 

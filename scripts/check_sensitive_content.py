@@ -138,6 +138,11 @@ def _tag_refs(root: Path) -> Iterable[tuple[str, str, str]]:
             yield object_name, object_type, refname
 
 
+def _is_public_git_email(email: str) -> bool:
+    """Allow GitHub's documented no-reply identities without trusting its whole domain."""
+    return email.endswith("@users.noreply.github.com") or email == "noreply@github.com"
+
+
 def _scan_tag_chain(root: Path, object_name: str, scanned: set[str]) -> list[Finding]:
     findings: list[Finding] = []
     current = object_name
@@ -150,7 +155,7 @@ def _scan_tag_chain(root: Path, object_name: str, scanned: set[str]) -> list[Fin
         content = _git_output(root, "cat-file", "tag", current)
         findings.extend(scan_text(git_path / "object", content))
         tagger = re.search(r"^tagger .* <([^>]+)>", content, re.MULTILINE)
-        if tagger and not tagger.group(1).endswith("@users.noreply.github.com"):
+        if tagger and not _is_public_git_email(tagger.group(1)):
             findings.append(Finding(git_path, 1, "git_tagger_email"))
         target = re.search(r"^object ([0-9a-f]+)$", content, re.MULTILINE)
         if target is None:
@@ -169,10 +174,10 @@ def scan_git(root: Path) -> list[Finding]:
     for revision in _reachable_revisions(root):
         git_path = Path(".git") / "commits" / revision
         author = _git_output(root, "show", "-s", "--format=%ae", revision).strip()
-        if author and not author.endswith("@users.noreply.github.com"):
+        if author and not _is_public_git_email(author):
             findings.append(Finding(git_path, 1, "git_author_email"))
         committer = _git_output(root, "show", "-s", "--format=%ce", revision).strip()
-        if committer and not committer.endswith("@users.noreply.github.com"):
+        if committer and not _is_public_git_email(committer):
             findings.append(Finding(git_path, 1, "git_committer_email"))
 
         message = _git_output(root, "show", "-s", "--format=%B", revision)
