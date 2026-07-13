@@ -4,6 +4,12 @@
 
 This project follows Semantic Versioning. Notable changes are recorded here.
 
+## 0.5.1 - 2026-07-13
+
+- Added self-contained light, dark, and composer SVG brand assets to make Model Economy easier to identify in Codex plugin settings and the composer.
+- Used a flat geometric routing mark with no gradients, external fonts, scripts, or embedded raster content.
+- Added manifest and asset-contract tests so future releases cannot silently lose or externalize the plugin artwork.
+
 ## 0.5.0 - 2026-07-13
 
 - Added three on-demand lightweight leaf skills: `domain-context`, `module-design`, and `disposable-prototype`.
