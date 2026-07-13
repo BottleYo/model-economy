@@ -8,7 +8,13 @@ from subprocess import DEVNULL, run
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from check_sensitive_content import format_findings, scan, scan_git, scan_text
+from check_sensitive_content import (
+    _is_public_git_email,
+    format_findings,
+    scan,
+    scan_git,
+    scan_text,
+)
 
 
 def _join(*parts: str) -> str:
@@ -28,6 +34,20 @@ def _private_project_name() -> str:
 
 
 class SensitiveContentTests(unittest.TestCase):
+    def test_public_git_email_allows_only_documented_noreply_forms(self):
+        self.assertTrue(_is_public_git_email("fixture@users.noreply.github.com"))
+        self.assertTrue(_is_public_git_email("noreply@github.com"))
+
+        for email in (
+            "fixture@example.invalid",
+            "attacker@github.com",
+            "noreply+fixture@github.com",
+            "noreply@github.com.example.invalid",
+            "",
+        ):
+            with self.subTest(email=email):
+                self.assertFalse(_is_public_git_email(email))
+
     def test_scan_text_reports_each_prohibited_content_type(self):
         cases = {
             "private_key": _private_key_header(),

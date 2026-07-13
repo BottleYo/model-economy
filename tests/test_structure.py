@@ -237,13 +237,17 @@ class StructureTests(unittest.TestCase):
             (ROOT / "plugins/model-economy/.codex-plugin/plugin.json").read_text(encoding="utf-8")
         )
         pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+        cli = (ROOT / "plugins/model-economy/scripts/model_economy_lib/cli.py").read_text(
+            encoding="utf-8"
+        )
         skill = (ROOT / "plugins/model-economy/skills/cost-aware-development/SKILL.md").read_text(
             encoding="utf-8"
         )
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
-        self.assertEqual(manifest["version"], "0.4.0")
-        self.assertIn('version = "0.4.0"', pyproject)
+        self.assertEqual(manifest["version"], "0.5.0")
+        self.assertIn('version = "0.5.0"', pyproject)
+        self.assertIn('Context(home, PLUGIN_ROOT, "0.5.0")', cli)
         self.assertIn("软件开发", skill.split("---", 2)[1])
         self.assertIn("enable-global-routing", readme)
         self.assertIn("disable-global-routing", readme)

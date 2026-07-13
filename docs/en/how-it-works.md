@@ -40,6 +40,18 @@ Model Economy includes four conditional quality gates. The intent gate blocks im
 
 These gates are not a fixed pipeline. Clear goals and acceptance criteria do not require repeat design approval. Documentation, formatting, and deterministic configuration do not require formal TDD. Failed or unavailable verification must be disclosed.
 
+## Lightweight engineering skills
+
+Model Economy can load three focused leaf skills without changing routing:
+
+| Skill | Trigger | Output |
+| --- | --- | --- |
+| `domain-context` | Domain vocabulary, invariants, or ADRs directly affect the task | Minimal vocabulary, constraints, and documented conflicts |
+| `module-design` | Module boundaries, coupling, or change surface need evaluation | Boundary findings, interface tradeoffs, and the smallest improvement |
+| `disposable-prototype` | A small experiment is cheaper than more discussion about one concrete unknown | Isolated experiment, observed result, and production decision input |
+
+Leaf skills have `classification_effect: none` and `subagent_starts: 0`. They do not own orchestration, add plans or reviews, or commit on their own. Prototypes must not use any real account, cause any external write or destructive side effect, or obtain credentials from files, environment variables, keychains, token caches, or raw session databases. Production code still passes through the approval, testing, and verification required by its task class.
+
 ## One orchestration authority and Superpowers
 
 Instruction priority selects one orchestration workflow. Model Economy is the default source for role topology, capability tiers, subagent budgets, and completion gates. Installing, enabling, or discovering Superpowers does not authorize its full workflow.

@@ -92,7 +92,7 @@ python3 plugins/model-economy/scripts/model_economy.py upgrade
 python3 plugins/model-economy/scripts/model_economy.py enable-global-routing
 ```
 
-The final command idempotently refreshes the managed global rule with the 0.4.0 native default and strict handoff policy. `--force` overwrites a conflicting managed file. Resolve the diff first whenever possible.
+After reinstalling the plugin, the 0.5.0 lightweight leaf skills become discoverable in new tasks. The final command idempotently refreshes the managed global rule so its native default and strict handoff policy stay current. `--force` overwrites a conflicting managed file. Resolve the diff first whenever possible.
 
 ## Export and import a profile
 

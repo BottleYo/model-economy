@@ -1,0 +1,4 @@
+interface:
+  display_name: "领域上下文"
+  short_description: "提炼当前开发任务所需的领域术语、不变量与 ADR 约束"
+  default_prompt: "使用 $domain-context 提炼当前任务需要遵守的领域词汇与约束。"

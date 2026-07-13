@@ -1,5 +1,5 @@
 {
-  "schema_version": 4,
+  "schema_version": 5,
   "classification_order": [
     "large_or_high_risk",
     "mechanical",
@@ -186,6 +186,66 @@
         "model-economy-batch-worker"
       ],
       "strong_max": 1
+    }
+  },
+  "lightweight_practices": {
+    "orchestration_authority": "model_economy",
+    "classification_effect": "none",
+    "subagent_starts": 0,
+    "skills": {
+      "domain-context": {
+        "skill": "domain-context",
+        "trigger": {
+          "operator": "any",
+          "conditions": [
+            {"predicate": "domain_vocabulary_unclear"},
+            {"predicate": "domain_invariants_relevant"},
+            {"predicate": "domain_docs_or_adrs_relevant"}
+          ]
+        },
+        "allowed_outputs": [
+          "shared_vocabulary",
+          "domain_invariants",
+          "documented_constraint_conflicts"
+        ]
+      },
+      "module-design": {
+        "skill": "module-design",
+        "trigger": {
+          "operator": "any",
+          "conditions": [
+            {"predicate": "module_boundary_under_review"},
+            {"predicate": "coupling_or_change_surface_problem"},
+            {"predicate": "architecture_improvement_requested"}
+          ]
+        },
+        "allowed_outputs": [
+          "boundary_findings",
+          "interface_tradeoffs",
+          "smallest_structural_improvement"
+        ]
+      },
+      "disposable-prototype": {
+        "skill": "disposable-prototype",
+        "trigger": {
+          "operator": "any",
+          "conditions": [
+            {"predicate": "prototype_explicitly_requested"},
+            {
+              "operator": "all",
+              "conditions": [
+                {"predicate": "concrete_design_unknown"},
+                {"predicate": "small_experiment_cheaper_than_discussion"}
+              ]
+            }
+          ]
+        },
+        "allowed_outputs": [
+          "isolated_experiment",
+          "observed_result",
+          "production_decision_input"
+        ]
+      }
     }
   },
   "approval_gate": {

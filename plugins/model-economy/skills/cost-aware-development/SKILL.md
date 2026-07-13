@@ -19,6 +19,12 @@ Model Economy 自带意图门、计划门、测试门和证据门，不依赖其
 
 目标存在实质歧义、高风险决策或未批准架构边界时，实施前必须取得可追溯审批。目标、约束和验收已经明确时，不重复要求设计审批。简单任务不写持久化计划；标准任务只使用与复杂度匹配的短计划；大型/高风险任务才要求持久化计划。测试强度匹配行为风险。声明完成前始终核对新鲜验证证据。
 
+## 轻量工程能力
+
+需要专项方法时，可以按需组合 `domain-context`、`module-design` 和 `disposable-prototype`。它们分别用于提炼已有领域约束、检查模块边界，以及用隔离的一次性实验回答具体未知；没有匹配触发条件时不要读取或执行。
+
+这些叶子 Skill 不改变任务分类、模型选择、角色拓扑或 subagent 预算，不得接管计划、审查、提交或完成门。它们自身不启动 subagent；涉及实际产品代码的后续工作仍由本 Skill 分类和编排。详细触发条件以[路由策略](references/routing-policy.json)中的 `lightweight_practices` 为准。
+
 ## Superpowers 兼容
 
 安装、启用或发现 Superpowers 不构成启用完整 Superpowers 工作流的授权。默认由 Model Economy 独占任务分类、代理编排和质量门，不自动调用其完整 brainstorming、planning、subagent-driven-development、executing-plans 或 finishing 流程。
