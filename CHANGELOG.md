@@ -4,6 +4,13 @@
 
 This project follows Semantic Versioning. Notable changes are recorded here.
 
+## 0.5.0 - 2026-07-13
+
+- Added three on-demand lightweight leaf skills: `domain-context`, `module-design`, and `disposable-prototype`.
+- Kept leaf skills at zero subagent starts with no task-classification, model-routing, or commit authority; production implementation remains under Model Economy's single orchestration authority.
+- Added isolation and explicit bans on real accounts, external writes, destructive side effects, and all credential sources for disposable prototypes.
+- Encoded lightweight triggers and outputs in the machine routing policy while keeping the six roles and `strong` limits unchanged.
+
 ## 0.4.0 - 2026-07-11
 
 - Replaced runtime dependencies on Superpowers skills with risk-triggered intent, planning, testing, and evidence gates.

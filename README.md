@@ -70,6 +70,16 @@ The adapter reports CodexBar's local token totals, model breakdowns, and estimat
 | `model-economy-explorer` | `economy` | Read only | Minimal file inventory and facts |
 | `model-economy-batch-worker` | `economy` | Workspace write | Fixed-rule edits with per-item checks |
 
+## Lightweight engineering skills
+
+Version 0.5.0 includes three independently triggered leaf skills:
+
+- `domain-context` extracts only the domain vocabulary, invariants, and ADR constraints needed by the current task.
+- `module-design` checks module boundaries, knowledge leakage, and change surface, then suggests the smallest structural improvement.
+- `disposable-prototype` answers a concrete unknown with an isolated throwaway experiment instead of treating exploratory code as production work.
+
+These skills start no subagents, do not change task classification, model mapping, the six-role topology, or quality gates, and never commit on their own. Production implementation returns to `cost-aware-development` routing. They are built into the plugin and add no dependency on an external engineering-method plugin.
+
 ## Global routing
 
 After installation, add the generic development-routing block to your global `$CODEX_HOME/AGENTS.md`:

@@ -70,6 +70,16 @@ python3 plugins/model-economy/scripts/model_economy.py usage --format json
 | `model-economy-explorer` | `economy` | 只读 | 最小文件清单与事实收集 |
 | `model-economy-batch-worker` | `economy` | 可写工作区 | 按固定规则编辑并逐项检查 |
 
+## 轻量工程能力
+
+0.5.0 提供三个可独立触发的叶子 Skill：
+
+- `domain-context`：只提炼当前任务需要的领域术语、不变量与 ADR 约束。
+- `module-design`：检查模块边界、知识泄漏和变更面，给出最小结构改进。
+- `disposable-prototype`：用隔离的一次性实验回答具体未知，不把探索代码当成品。
+
+这些 Skill 不启动 subagent，不改变任务分类、模型映射、六角色拓扑或质量门，也不自行提交代码。涉及正式实现时仍回到 `cost-aware-development` 路由。它们是插件内置能力，不依赖外部工程方法插件。
+
 ## 全局路由
 
 安装完成后，可把通用开发路由块加入全局 `$CODEX_HOME/AGENTS.md`：

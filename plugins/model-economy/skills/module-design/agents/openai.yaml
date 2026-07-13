@@ -1,0 +1,4 @@
+interface:
+  display_name: "模块设计"
+  short_description: "检查模块边界、知识泄漏与变更面，并给出可验证的最小改进方案"
+  default_prompt: "使用 $module-design 检查这项改动的模块边界与最小结构改进。"

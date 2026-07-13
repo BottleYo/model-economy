@@ -11,6 +11,12 @@ ROLE_MATRIX = SKILL_DIR / "references/role-matrix.md"
 ROUTING_EXAMPLES = SKILL_DIR / "references/routing-examples.md"
 CONTEXT_CONTRACT = SKILL_DIR / "references/context-contract.md"
 QUALITY_GATES = SKILL_DIR / "references/quality-gates.md"
+SKILLS_ROOT = ROOT / "plugins/model-economy/skills"
+LEAF_SKILLS = {
+    "domain-context": SKILLS_ROOT / "domain-context/SKILL.md",
+    "module-design": SKILLS_ROOT / "module-design/SKILL.md",
+    "disposable-prototype": SKILLS_ROOT / "disposable-prototype/SKILL.md",
+}
 
 
 def load_policy():
@@ -73,7 +79,7 @@ class SkillContractTests(unittest.TestCase):
     def test_policy_has_ordered_first_match_classification_and_default_fallback(self):
         policy = load_policy()
 
-        self.assertEqual(policy["schema_version"], 4)
+        self.assertEqual(policy["schema_version"], 5)
         self.assertEqual(
             policy["classification_order"],
             ["large_or_high_risk", "mechanical", "simple", "standard"],
@@ -343,6 +349,68 @@ class SkillContractTests(unittest.TestCase):
                 "evidence": "required_before_completion_claim",
             },
         )
+
+    def test_machine_policy_declares_non_orchestrating_lightweight_practices(self):
+        practices = load_policy()["lightweight_practices"]
+
+        self.assertEqual(practices["orchestration_authority"], "model_economy")
+        self.assertEqual(practices["classification_effect"], "none")
+        self.assertEqual(practices["subagent_starts"], 0)
+        self.assertEqual(set(practices["skills"]), set(LEAF_SKILLS))
+        for name, practice in practices["skills"].items():
+            self.assertEqual(practice["skill"], name)
+            self.assertEqual(practice["trigger"]["operator"], "any")
+            self.assertTrue(practice["trigger"]["conditions"])
+            self.assertTrue(practice["allowed_outputs"])
+
+        self.assertEqual(
+            practices["skills"]["disposable-prototype"]["trigger"],
+            {
+                "operator": "any",
+                "conditions": [
+                    {"predicate": "prototype_explicitly_requested"},
+                    {
+                        "operator": "all",
+                        "conditions": [
+                            {"predicate": "concrete_design_unknown"},
+                            {"predicate": "small_experiment_cheaper_than_discussion"},
+                        ],
+                    },
+                ],
+            },
+        )
+
+    def test_lightweight_leaf_skills_are_composable_and_cannot_take_orchestration(self):
+        for name, path in LEAF_SKILLS.items():
+            with self.subTest(name=name):
+                text = path.read_text(encoding="utf-8")
+                frontmatter = text.split("---", 2)[1]
+                self.assertIn(f"name: {name}", frontmatter)
+                self.assertIn("不负责任务编排", frontmatter)
+                self.assertIn("不得启动 subagent", text)
+                self.assertIn("不得改变任务分类", text)
+                self.assertIn("不得自行提交", text)
+                metadata = (path.parent / "agents/openai.yaml").read_text(encoding="utf-8")
+                self.assertIn("display_name:", metadata)
+                self.assertIn("short_description:", metadata)
+                self.assertIn(f"${name}", metadata)
+
+        prototype = LEAF_SKILLS["disposable-prototype"].read_text(encoding="utf-8")
+        for boundary in (
+            "任何真实账户",
+            "任何外部写入或破坏性副作用",
+            "环境变量",
+            "钥匙串",
+        ):
+            self.assertIn(boundary, prototype)
+
+    def test_cost_aware_skill_keeps_leaf_practices_below_routing_authority(self):
+        skill = SKILL.read_text(encoding="utf-8")
+
+        self.assertIn("## 轻量工程能力", skill)
+        for name in LEAF_SKILLS:
+            self.assertIn(f"`{name}`", skill)
+        self.assertIn("不改变任务分类、模型选择、角色拓扑或 subagent 预算", skill)
 
     def test_machine_policy_makes_strict_handoff_mutually_exclusive(self):
         modes = load_policy()["orchestration_modes"]

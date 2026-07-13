@@ -92,7 +92,7 @@ python3 plugins/model-economy/scripts/model_economy.py upgrade
 python3 plugins/model-economy/scripts/model_economy.py enable-global-routing
 ```
 
-最后一条命令会幂等刷新受管理全局规则，使 0.4.0 的原生默认和 strict 交权规则生效。`--force` 会覆盖冲突的受管理文件。通常应先处理差异。
+重新安装插件后，0.5.0 的轻量叶子 Skill 会在新任务中可发现；最后一条命令会幂等刷新受管理全局规则，使原生默认和 strict 交权规则保持最新。`--force` 会覆盖冲突的受管理文件。通常应先处理差异。
 
 ## 导出与导入档案
 

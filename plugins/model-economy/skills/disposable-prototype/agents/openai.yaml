@@ -1,0 +1,4 @@
+interface:
+  display_name: "一次性原型"
+  short_description: "通过隔离的最小可运行实验，回答一个具体技术或交互未知"
+  default_prompt: "使用 $disposable-prototype 设计一个隔离实验来回答当前未知。"
