@@ -139,7 +139,7 @@ def _context(codex_home: Path | None) -> Context:
         if codex_home is not None
         else resolve_codex_home(os.environ)
     )
-    return Context(home, PLUGIN_ROOT, "0.6.0-rc.1")
+    return Context(home, PLUGIN_ROOT, "0.6.0")
 
 
 def _load_bundled_profile(name: str) -> Profile:

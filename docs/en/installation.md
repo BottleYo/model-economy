@@ -96,7 +96,7 @@ python3 plugins/model-economy/scripts/model_economy.py upgrade
 python3 plugins/model-economy/scripts/model_economy.py enable-global-routing
 ```
 
-After reinstalling the plugin, the 0.6.0 release-candidate skills become discoverable in new tasks. The final command idempotently refreshes the managed global rule so its native default and strict handoff policy stay current. `--force` overwrites a conflicting managed file. Resolve the diff first whenever possible.
+After reinstalling the plugin, the 0.6.0 skills become discoverable in new tasks. The final command idempotently refreshes the managed global rule so its native default and strict handoff policy stay current. `--force` overwrites a conflicting managed file. Resolve the diff first whenever possible.
 
 ## Export and import a profile
 

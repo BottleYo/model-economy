@@ -25,7 +25,7 @@ class StatusTests(unittest.TestCase):
         temporary = tempfile.TemporaryDirectory()
         self.addCleanup(temporary.cleanup)
         self.home = Path(temporary.name) / "codex-home"
-        self.context = Context(self.home, PLUGIN_ROOT, "0.6.0-rc.1")
+        self.context = Context(self.home, PLUGIN_ROOT, "0.6.0")
 
     def test_empty_home_is_core_without_creating_files(self):
         report = inspect_status(self.context)

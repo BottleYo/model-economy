@@ -277,9 +277,9 @@ class StructureTests(unittest.TestCase):
         )
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
-        self.assertEqual(manifest["version"], "0.6.0-rc.1")
-        self.assertIn('version = "0.6.0-rc.1"', pyproject)
-        self.assertIn('Context(home, PLUGIN_ROOT, "0.6.0-rc.1")', cli)
+        self.assertEqual(manifest["version"], "0.6.0")
+        self.assertIn('version = "0.6.0"', pyproject)
+        self.assertIn('Context(home, PLUGIN_ROOT, "0.6.0")', cli)
         self.assertIn("软件开发", skill.split("---", 2)[1])
         self.assertIn("enable-global-routing", readme)
         self.assertIn("disable-global-routing", readme)
