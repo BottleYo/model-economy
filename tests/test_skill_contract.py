@@ -79,7 +79,7 @@ class SkillContractTests(unittest.TestCase):
     def test_policy_has_ordered_first_match_classification_and_default_fallback(self):
         policy = load_policy()
 
-        self.assertEqual(policy["schema_version"], 5)
+        self.assertEqual(policy["schema_version"], 6)
         self.assertEqual(
             policy["classification_order"],
             ["large_or_high_risk", "mechanical", "simple", "standard"],
@@ -105,6 +105,38 @@ class SkillContractTests(unittest.TestCase):
         self.assertEqual(standard["match"], {"operator": "default", "predicates": []})
         self.assertEqual(policy["classification_order"][-1], "standard")
         self.assertEqual(classify(policy, {}), "standard")
+
+    def test_installation_modes_fail_closed_without_claiming_identity(self):
+        modes = load_policy()["installation_modes"]
+
+        self.assertEqual(modes["persistence"], "none")
+        self.assertEqual(set(modes["modes"]), {"core", "enhanced", "degraded"})
+        self.assertFalse(modes["modes"]["core"]["custom_roles_available"])
+        self.assertEqual(
+            modes["modes"]["core"]["simple_mechanical_standard_execution"],
+            "main_agent_with_native_quality_gates",
+        )
+        high_risk = modes["modes"]["core"]["large_or_high_risk"]
+        self.assertNotIn("completion_claim", high_risk)
+        self.assertEqual(
+            high_risk["complete_model_economy_high_risk_workflow_claim"], "forbidden"
+        )
+        self.assertEqual(
+            high_risk["reduced_assurance_single_agent"],
+            {
+                "requires_explicit_user_approval": True,
+                "task_completion_allowed": True,
+                "complete_model_economy_high_risk_workflow_claim": "forbidden",
+            },
+        )
+        self.assertEqual(modes["modes"]["degraded"]["routing"], "fail_closed")
+        self.assertEqual(
+            modes["identity_claims"],
+            {"role_identity_verified": False, "model_identity_verified": False},
+        )
+        skill = SKILL.read_text(encoding="utf-8")
+        self.assertIn("出现部分或全部同名角色但无法验证完整增强健康状态", skill)
+        self.assertIn("保守视为降级状态", skill)
 
     def test_classification_rules_are_independently_decidable_and_first_match_wins(self):
         policy = load_policy()

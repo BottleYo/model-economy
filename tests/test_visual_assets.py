@@ -165,9 +165,68 @@ class VisualAssetTests(unittest.TestCase):
 
         for source in sources:
             self.assertIn("Rigor scales with risk.", source)
-            self.assertIn("Hard caps. One orchestrator.", source)
+            self.assertIn("Policy caps. One orchestrator.", source)
             self.assertIn("STRONG 0/1/2", source)
             self.assertIn("SUBAGENTS 3 MAX", source)
+
+    def test_public_asset_renderers_are_repeatable(self):
+        with tempfile.TemporaryDirectory() as directory:
+            temporary = Path(directory)
+            preview = temporary / "social-preview.png"
+            subprocess.run(
+                [sys.executable, str(RENDER_SCRIPT), "--output", str(preview)],
+                check=True,
+                cwd=ROOT,
+            )
+            self.assertEqual(preview.read_bytes(), PNG_ASSET.read_bytes())
+
+            plugin_output = temporary / "plugin"
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts/render_plugin_screenshots.py"),
+                    "--output-dir",
+                    str(plugin_output),
+                ],
+                check=True,
+                cwd=ROOT,
+            )
+            generated_plugin = list(plugin_output.glob("*.png"))
+            self.assertEqual(len(generated_plugin), 2)
+            for generated in generated_plugin:
+                committed = PLUGIN_ROOT / "assets/screenshots" / generated.name
+                self.assertEqual(generated.read_bytes(), committed.read_bytes())
+
+            promotion_output = temporary / "promotion"
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts/render_xiaohongshu_cards.py"),
+                    "--output-dir",
+                    str(promotion_output),
+                ],
+                check=True,
+                cwd=ROOT,
+            )
+            generated_promotion = list(promotion_output.glob("*.svg"))
+            self.assertEqual(len(generated_promotion), 6)
+            for generated in generated_promotion:
+                committed = ROOT / "assets/promotion" / generated.name
+                self.assertEqual(generated.read_bytes(), committed.read_bytes())
+
+            submission_logo = temporary / "logo-512.png"
+            subprocess.run(
+                [
+                    sys.executable,
+                    str(ROOT / "scripts/render_submission_logo.py"),
+                    "--output",
+                    str(submission_logo),
+                ],
+                check=True,
+                cwd=ROOT,
+            )
+            committed_logo = PLUGIN_ROOT / "assets/brand/logo-512.png"
+            self.assertEqual(submission_logo.read_bytes(), committed_logo.read_bytes())
 
     def test_social_preview_badge_labels_fit_their_bounds(self):
         renderer = load_renderer()

@@ -16,7 +16,7 @@ It can also display local CodexBar token and estimated-cost summaries. It does n
 
 - A one-line fix should not automatically become a project ceremony.
 - A high-risk design should still receive strong architecture judgment and an independent final review.
-- The agent should have a hard budget, not an open-ended invitation to spawn more agents or escalate models.
+- The agent should have policy-level limits, not an open-ended invitation to spawn more agents or escalate models.
 - Completion should mean fresh evidence proportionate to the change, not merely a confident status message.
 
 ## What makes it different
@@ -24,7 +24,7 @@ It can also display local CodexBar token and estimated-cost summaries. It does n
 | Constraint | What it changes in practice |
 | --- | --- |
 | Risk comes before routing | Every task is classified as simple, standard, mechanical, or large/high-risk before a role or model tier is selected. |
-| Strong calls are capped | The task-class maximum is `0`, `1`, or `2`; strong models are reserved for architecture, diagnosis after repeated failure, and final review. |
+| Strong calls have policy-level caps | The task-class maximum is `0`, `1`, or `2`; these are routing-policy limits, not proof of model identity or platform-enforced quotas. |
 | Roles have permissions | The strong architect and final reviewer are read-only. Implementation stays with `balanced`; fixed-rule batch edits may use `economy`. |
 | Orchestration is bounded | A task may start at most three subagents, recursive delegation is prohibited, and small work normally starts none. |
 | Quality gates scale with risk | Intent, approval, planning, testing, and completion evidence are native gates, but routine work does not inherit a full methodology. |
@@ -54,25 +54,53 @@ This is a workflow choice, not a claim that one tool is universally better. If y
 
 Tasks are classified in a fixed order: large or high-risk, mechanical, simple, then standard. The first matching class decides the permitted roles and the maximum number of `strong` calls. See [how it works](docs/en/how-it-works.md) for the complete policy.
 
-| Example | Route |
+The role names in this table describe a healthy **enhanced mode**. In core mode, simple, mechanical, and standard tasks use the main agent; large/high-risk work stops at the compatibility gate described below.
+
+| Example | Enhanced-mode route |
 | --- | --- |
 | Known configuration key, known file, direct check | Simple: main agent, no subagent, `strong` maximum `0` |
 | Repeated edit with a fixed rule, bounded files, and per-item validation | Mechanical: `economy` batch worker, only when all five mechanical conditions hold |
 | Cross-module bug with a known product behavior | Standard: `balanced` implementation; explorer or reviewer only when their evidence is needed |
 | Authentication, permissions, new architecture, or wide blast radius | Large/high-risk: read-only strong architect, balanced implementation, read-only strong final reviewer; `strong` maximum `2` |
 
-## Install in 60 seconds
+## Core and enhanced modes
+
+Directory-style installation starts in **core mode**. All four skills work without user-level six-role files: simple, mechanical, and standard work stays with the main agent and still uses the native quality gates. Core mode does not claim custom role isolation or independent model mapping.
+
+The repository CLI can add **enhanced mode**. It installs six local role definitions and an inherited or explicit three-tier model mapping. Only a complete, hash-matching, current enhancement is treated as enabled. Partial, modified, or outdated enhancement artifacts are reported as `degraded` and fail closed.
+
+For large/high-risk work in core mode, Model Economy reports that isolated architecture and final-review roles are unavailable. The user may install enhanced mode or explicitly approve a reduced-assurance single-agent path; that path is never described as the complete Model Economy high-risk workflow. Model and role identity remain unverified in both modes.
+
+## Install
 
 ```sh
 git clone https://github.com/BottleYo/model-economy.git
 cd model-economy
 codex plugin marketplace add .
 codex plugin add model-economy@model-economy-public
-python3 plugins/model-economy/scripts/model_economy.py install --profile inherited
-python3 plugins/model-economy/scripts/model_economy.py verify
 ```
 
-Use `py -3.11` in place of `python3` on Windows. The full installation, upgrade, migration, and removal guide is in [Installation](docs/en/installation.md).
+This is the formal repository installation path and provides core mode. Start a new task after installation. To add the optional six-role enhancement, use the default `inherited` profile:
+
+```sh
+python3 plugins/model-economy/scripts/model_economy.py install --profile inherited
+python3 plugins/model-economy/scripts/model_economy.py verify
+python3 plugins/model-economy/scripts/model_economy.py status
+```
+
+Use `py -3.11` in place of `python3` on Windows. Model profiles, global routing, CodexBar usage, upgrade, transfer, and uninstall are advanced options documented in [Installation](docs/en/installation.md) and the [CLI reference](docs/en/cli-reference.md).
+
+## First experience
+
+Try one prompt from each risk level and compare the route with the expectation:
+
+| Prompt | Expected core-mode route |
+| --- | --- |
+| “Change the known timeout constant from 20 to 30 and run its direct test.” | Simple: main agent, direct verification, no custom role. |
+| “Fix this reproducible bug across the parser and renderer, then run focused and regression tests.” | Standard: main agent, short plan and risk-scaled quality gates. |
+| “Redesign authentication and migrate existing permissions.” | Large/high-risk: report missing isolated architect/final reviewer and stop for the user’s choice. |
+
+Check the mode with `model_economy.py status --format text|json`. To stop using the plugin for one task, say `This task must not use Model Economy.` To remove enhanced mode while keeping the plugin, run `uninstall`; use `uninstall --purge` to remove its local config and state as well.
 
 ## Use it on your terms
 
@@ -114,14 +142,14 @@ The adapter reports CodexBar's local token totals, model breakdowns, and estimat
 
 ## Task classification
 
-| Class | Conditions | Default capability | `strong` maximum |
+| Class | Conditions | Enhanced-mode default capability | `strong` policy maximum |
 | --- | --- | --- | --- |
 | Large or high-risk | Any high-risk boundary, new architecture, or wide blast radius | `strong` gates plus `balanced` implementation | 2 |
 | Mechanical | All five fixed-rule conditions hold | `economy` batch work | 0 |
 | Simple | Known files, no open judgment, direct verification, and no creative or behavioral change | Main agent | 0 |
 | Standard | The fallback class | `balanced` | 1 |
 
-## Roles
+## Enhanced-mode roles
 
 | Role | Capability | Access | Responsibility |
 | --- | --- | --- | --- |
@@ -134,7 +162,7 @@ The adapter reports CodexBar's local token totals, model breakdowns, and estimat
 
 ## Lightweight engineering skills
 
-Version 0.5.0 includes three independently triggered leaf skills:
+The 0.6.0 release candidate includes three independently triggered leaf skills:
 
 - `domain-context` extracts only the domain vocabulary, invariants, and ADR constraints needed by the current task.
 - `module-design` checks module boundaries, knowledge leakage, and change surface, then suggests the smallest structural improvement.
@@ -159,6 +187,7 @@ The local CLI manages only its configuration, its declared agent files under `CO
 - [CLI reference](docs/en/cli-reference.md): commands, options, and exit codes.
 - [Security policy](SECURITY.md): private vulnerability reporting and release checks.
 - [Changelog](CHANGELOG.md): released changes.
+- [Project website](https://bottleyo.github.io/model-economy/), [Support](SUPPORT.md), [Contributing](CONTRIBUTING.md), and [Roadmap](ROADMAP.md).
 
 ## Current limitations
 
@@ -166,6 +195,7 @@ The local CLI manages only its configuration, its declared agent files under `CO
 - `doctor --smoke` does not verify role or model identity.
 - The plugin does not install, toggle, or modify Superpowers; it hands off orchestration only after explicit strict authorization for the current task.
 - Global routing does not include project-specific context and is not removed automatically by plugin uninstall.
+- The GitHub Pages site is static and uses no telemetry, cookies, or external fonts; this repository is a community open-source project, not an official OpenAI product.
 
 ## Contributing
 

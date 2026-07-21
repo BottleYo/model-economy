@@ -38,10 +38,12 @@ class StructureTests(unittest.TestCase):
             "What makes it different",
             "Model Economy vs full Superpowers",
             "How it works",
-            "Install in 60 seconds",
+            "Core and enhanced modes",
+            "Install",
+            "First experience",
             "Use it on your terms",
             "Task classification",
-            "Roles",
+            "Enhanced-mode roles",
             "Global routing",
             "Security and trust boundaries",
             "Documentation",
@@ -77,10 +79,12 @@ class StructureTests(unittest.TestCase):
             "特别之处",
             "Model Economy 与完整 Superpowers",
             "工作原理",
-            "60 秒安装",
+            "核心模式与增强模式",
+            "安装",
+            "首次体验",
             "按你的方式使用",
             "任务分类",
-            "角色",
+            "增强模式角色",
             "全局路由",
             "安全与信任边界",
             "文档",
@@ -273,9 +277,9 @@ class StructureTests(unittest.TestCase):
         )
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
-        self.assertEqual(manifest["version"], "0.5.1")
-        self.assertIn('version = "0.5.1"', pyproject)
-        self.assertIn('Context(home, PLUGIN_ROOT, "0.5.1")', cli)
+        self.assertEqual(manifest["version"], "0.6.0-rc.1")
+        self.assertIn('version = "0.6.0-rc.1"', pyproject)
+        self.assertIn('Context(home, PLUGIN_ROOT, "0.6.0-rc.1")', cli)
         self.assertIn("软件开发", skill.split("---", 2)[1])
         self.assertIn("enable-global-routing", readme)
         self.assertIn("disable-global-routing", readme)

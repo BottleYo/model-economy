@@ -8,7 +8,15 @@ import sys
 from typing import Sequence
 
 from .config import ConfigError, export_profile, import_profile, load_config
-from .doctor import SmokeReport, run_doctor, run_smoke, verify_installation
+from .doctor import (
+    SmokeReport,
+    StatusReport,
+    inspect_status,
+    run_doctor,
+    run_smoke,
+    status_to_dict,
+    verify_installation,
+)
 from .filesystem import resolve_codex_home
 from .global_routing import disable_global_routing, enable_global_routing
 from .lifecycle import ChangeSet, ConflictError, Context, install, plan_upgrade, uninstall, upgrade
@@ -98,6 +106,9 @@ def _build_parser() -> Parser:
     doctor_parser = command("doctor")
     doctor_parser.add_argument("--smoke", action="store_true")
 
+    status_parser = command("status")
+    status_parser.add_argument("--format", choices=("text", "json"), default="text")
+
     upgrade_parser = command("upgrade")
     upgrade_parser.add_argument("--dry-run", action="store_true")
     upgrade_parser.add_argument("--force", action="store_true")
@@ -128,7 +139,7 @@ def _context(codex_home: Path | None) -> Context:
         if codex_home is not None
         else resolve_codex_home(os.environ)
     )
-    return Context(home, PLUGIN_ROOT, "0.5.1")
+    return Context(home, PLUGIN_ROOT, "0.6.0-rc.1")
 
 
 def _load_bundled_profile(name: str) -> Profile:
@@ -176,6 +187,26 @@ def _print_smoke(smoke: SmokeReport) -> None:
     print(f"Subagent 启动：{'通过' if smoke.subagent_started else '失败'}")
     print("角色身份：未验证（当前 Codex JSONL 不含 agent_type）")
     print("模型身份：未验证")
+
+
+def _print_status(report: StatusReport) -> None:
+    hashes = (
+        "不可用"
+        if report.role_hashes_match is None
+        else ("匹配" if report.role_hashes_match else "不匹配")
+    )
+    template = report.installed_template_version or "未安装"
+    print(f"插件版本：{report.plugin_version}")
+    print(f"当前模式：{report.mode}")
+    print(f"增强状态：{report.enhancement_state}")
+    print(f"角色文件：{report.role_files_present}/{report.role_files_expected}")
+    print(f"角色哈希：{hashes}")
+    print(f"模型映射：{report.model_mapping_status}")
+    print(f"模板版本：{template}")
+    print("角色身份：未验证")
+    print("模型身份：未验证")
+    if report.mode == "core":
+        print("说明：core 仅表示本地六角色增强缺失，不证明插件已安装或启用。")
 
 
 def _number(value: int | None) -> str:
@@ -232,6 +263,13 @@ def _run(args: argparse.Namespace) -> int:
             _print_smoke(smoke)
             return SUCCESS if report.ok and smoke.subagent_started else ENVIRONMENT_FAILURE
         return SUCCESS if report.ok else ENVIRONMENT_FAILURE
+    if args.command == "status":
+        report = inspect_status(context)
+        if args.format == "json":
+            print(json.dumps(status_to_dict(report), ensure_ascii=False, indent=2, sort_keys=True))
+        else:
+            _print_status(report)
+        return report.exit_code
     if args.command == "upgrade":
         changes = plan_upgrade(context, args.force) if args.dry_run else upgrade(context, args.force)
         if changes.conflicts:

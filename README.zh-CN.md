@@ -16,7 +16,7 @@ Model Economy 先判断任务风险，再决定由谁来做。模型路由只是
 
 - 改一行配置，不该自动升级成一套项目仪式。
 - 涉及权限、架构或大范围影响时，仍应由强模型做架构判断和独立终审。
-- Agent 应该有明确预算，不能无限追加 subagent 或不断升级模型。
+- Agent 应该有策略级上限，不能无限追加 subagent 或不断升级模型。
 - “完成”需要与风险相称的新鲜证据，而不是一句自信的状态说明。
 
 ## 特别之处
@@ -24,7 +24,7 @@ Model Economy 先判断任务风险，再决定由谁来做。模型路由只是
 | 约束 | 实际作用 |
 | --- | --- |
 | 先判风险，再选模型 | 每个任务先归入简单、标准、机械或大型/高风险，再确定角色与能力档位。 |
-| 强模型调用有硬上限 | 各类任务的 `strong` 上限只有 `0`、`1` 或 `2`；强模型只处理架构、连续失败后的诊断和最终审查。 |
+| 强模型调用有策略级上限 | 各类任务的 `strong` 上限为 `0`、`1` 或 `2`；这是路由策略限制，不代表平台强制额度，也不证明模型身份。 |
 | 角色自带权限边界 | 强模型架构师和终审员只读；正式实现交给 `balanced`，固定规则批处理才可能使用 `economy`。 |
 | 编排规模受控 | 每个任务最多启动三个 subagent，禁止递归委派；小任务通常一个也不启动。 |
 | 质量门随风险变化 | 意图、审批、计划、测试和完成证据都有原生规则，但例行工作不会被迫走完整方法论。 |
@@ -54,25 +54,53 @@ Model Economy 先判断任务风险，再决定由谁来做。模型路由只是
 
 任务按固定顺序分类：大型或高风险、机械、简单、标准。首个命中的类别决定可用角色与 `strong` 调用上限。完整规则见[工作原理](docs/zh-CN/how-it-works.md)。
 
-| 例子 | 默认路线 |
+下表中的角色名称只描述健康的**增强模式**。核心模式下，简单、机械和标准任务由主 Agent 执行；大型/高风险任务会在下文说明的兼容关口停止。
+
+| 例子 | 增强模式路线 |
 | --- | --- |
 | 配置项和文件都已知，可直接检查 | 简单：主 Agent 直接处理，不启用 subagent，`strong` 上限为 `0` |
 | 规则固定、文件范围有限、每项都能单独验证的重复修改 | 机械：五项机械条件全部满足后，交给 `economy` 批处理角色 |
 | 涉及多个模块，但产品行为已知的缺陷 | 标准：由 `balanced` 实现；只有确实需要证据时才启用 explorer 或 reviewer |
 | 认证、权限、新架构或影响范围很广 | 大型/高风险：强模型架构师只读设计，`balanced` 实现，强模型终审员只读验收；`strong` 上限为 `2` |
 
-## 60 秒安装
+## 核心模式与增强模式
+
+目录式安装默认进入**核心模式**。四个 Skill 都不依赖用户级六角色文件：简单、机械和标准任务由主 Agent 执行，原生质量门仍然生效。核心模式不声称具备自定义角色隔离或独立模型映射。
+
+仓库内的本地 CLI 可以安装**增强模式**，增加六个本地角色定义以及继承式或显式的三档模型映射。只有六角色齐全、受管理哈希匹配且模板为当前版本时，增强模式才算启用；部分缺失、被修改或过期会报告为 `degraded` 并失败关闭。
+
+核心模式遇到大型/高风险任务时，会明确说明独立架构师与终审员不可用。用户可以安装增强模式，或明确批准降低保障的单 Agent 路线；后者不得被描述为完整的 Model Economy 高风险流程。两种模式都不验证模型或角色身份。
+
+## 安装
 
 ```sh
 git clone https://github.com/BottleYo/model-economy.git
 cd model-economy
 codex plugin marketplace add .
 codex plugin add model-economy@model-economy-public
-python3 plugins/model-economy/scripts/model_economy.py install --profile inherited
-python3 plugins/model-economy/scripts/model_economy.py verify
 ```
 
-Windows 请将 `python3` 替换为 `py -3.11`。安装、升级、迁移和卸载详见[安装指南](docs/zh-CN/installation.md)。
+这是正式的仓库安装路径，完成后即可使用核心模式；安装后请新建任务。若需要可选的六角色增强，默认使用 `inherited` 档案：
+
+```sh
+python3 plugins/model-economy/scripts/model_economy.py install --profile inherited
+python3 plugins/model-economy/scripts/model_economy.py verify
+python3 plugins/model-economy/scripts/model_economy.py status
+```
+
+Windows 请将 `python3` 替换为 `py -3.11`。模型档案、全局路由、CodexBar 用量、升级、跨设备迁移和卸载都放在[安装指南](docs/zh-CN/installation.md)与 [CLI 参考](docs/zh-CN/cli-reference.md)的进阶章节。
+
+## 首次体验
+
+可以分别用三种风险级别的提示词检查路线是否符合预期：
+
+| 提示词 | 核心模式预期路线 |
+| --- | --- |
+| “把已知的超时常量从 20 改成 30，并运行直接测试。” | 简单：主 Agent 处理，直接验证，不调用自定义角色。 |
+| “修复这个可复现、同时涉及解析器和渲染器的缺陷，并运行聚焦与回归测试。” | 标准：主 Agent 处理，使用短计划和与风险匹配的质量门。 |
+| “重构认证系统并迁移现有权限。” | 大型/高风险：报告缺少独立架构师与终审员，停下来让用户选择。 |
+
+使用 `model_economy.py status --format text|json` 查看模式。若只想在当前任务停用，可以说“本任务不要使用 Model Economy”。若保留插件但移除增强模式，运行 `uninstall`；使用 `uninstall --purge` 可同时删除本地配置与状态。
 
 ## 按你的方式使用
 
@@ -114,14 +142,14 @@ python3 plugins/model-economy/scripts/model_economy.py usage --format json
 
 ## 任务分类
 
-| 类别 | 条件 | 默认能力 | `strong` 上限 |
+| 类别 | 条件 | 增强模式默认能力 | `strong` 策略上限 |
 | --- | --- | --- | --- |
 | 大型或高风险 | 任一高风险边界、新架构或影响范围很广 | `strong` 关口加 `balanced` 实现 | 2 |
 | 机械 | 五项固定规则条件全部满足 | `economy` 批处理 | 0 |
 | 简单 | 文件已知、无开放判断、可直接验证，且不改变创意或行为 | 主 Agent | 0 |
 | 标准 | 兜底类别 | `balanced` | 1 |
 
-## 角色
+## 增强模式角色
 
 | 角色 | 能力 | 权限 | 职责 |
 | --- | --- | --- | --- |
@@ -134,7 +162,7 @@ python3 plugins/model-economy/scripts/model_economy.py usage --format json
 
 ## 轻量工程能力
 
-0.5.0 提供三个可独立触发的叶子 Skill：
+0.6.0 候选版提供三个可独立触发的叶子 Skill：
 
 - `domain-context`：只提炼当前任务需要的领域术语、不变量与 ADR 约束。
 - `module-design`：检查模块边界、知识泄漏和变更面，给出最小结构改进。
@@ -159,6 +187,7 @@ python3 plugins/model-economy/scripts/model_economy.py usage --format json
 - [CLI 参考](docs/zh-CN/cli-reference.md)：命令、参数与退出码。
 - [安全策略](SECURITY.zh-CN.md)：私密漏洞报告与发布检查。
 - [更新记录](CHANGELOG.zh-CN.md)：已发布变更。
+- [项目网站](https://bottleyo.github.io/model-economy/)、[支持说明](SUPPORT.md)、[贡献指南](CONTRIBUTING.md)与[路线图](ROADMAP.md)。
 
 ## 当前限制
 
@@ -166,6 +195,7 @@ python3 plugins/model-economy/scripts/model_economy.py usage --format json
 - `doctor --smoke` 不验证角色或模型身份。
 - 插件不安装、启停或修改 Superpowers；仅在当前任务获得明确 strict 授权时与其交接编排权。
 - 全局路由不带项目特定上下文，插件卸载时也不会自动删除。
+- GitHub Pages 站点是纯静态页面，不使用遥测、Cookie 或外部字体；本仓库是社区开源项目，并非 OpenAI 官方产品。
 
 ## 贡献
 

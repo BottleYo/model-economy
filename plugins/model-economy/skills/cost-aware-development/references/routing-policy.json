@@ -1,5 +1,5 @@
 {
-  "schema_version": 5,
+  "schema_version": 6,
   "classification_order": [
     "large_or_high_risk",
     "mechanical",
@@ -32,6 +32,51 @@
         "model_economy_roles": "forbidden",
         "model_economy_scope": ["model_advice", "cost_advice"]
       }
+    }
+  },
+  "installation_modes": {
+    "detection": "infer_from_optional_enhancement_artifacts",
+    "persistence": "none",
+    "modes": {
+      "core": {
+        "custom_roles_available": false,
+        "model_mapping_available": false,
+        "simple_mechanical_standard_execution": "main_agent_with_native_quality_gates",
+        "large_or_high_risk": {
+          "required_report": "role_isolation_unavailable",
+          "complete_model_economy_high_risk_workflow_claim": "forbidden",
+          "next_choices": [
+            "install_enhanced_mode",
+            "explicitly_approve_reduced_assurance_single_agent"
+          ],
+          "reduced_assurance_single_agent": {
+            "requires_explicit_user_approval": true,
+            "task_completion_allowed": true,
+            "complete_model_economy_high_risk_workflow_claim": "forbidden"
+          }
+        }
+      },
+      "enhanced": {
+        "custom_roles_available": true,
+        "model_mapping_available": true,
+        "requirements": [
+          "all_six_role_files_present",
+          "managed_hashes_match",
+          "model_mapping_matches",
+          "template_current"
+        ],
+        "routing": "task_classes"
+      },
+      "degraded": {
+        "custom_roles_available": false,
+        "routing": "fail_closed",
+        "required_report": "repair_or_remove_incomplete_enhancement",
+        "completion_claim": "forbidden_for_large_or_high_risk"
+      }
+    },
+    "identity_claims": {
+      "role_identity_verified": false,
+      "model_identity_verified": false
     }
   },
   "task_classes": {

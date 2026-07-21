@@ -160,6 +160,30 @@ class CliTests(unittest.TestCase):
     def test_verify_returns_one_for_missing_installation(self):
         self.assertEqual(main(["--codex-home", str(self.home), "verify"]), 1)
 
+    def test_status_json_reports_core_without_installation(self):
+        output = StringIO()
+        with redirect_stdout(output):
+            code = main(["--codex-home", str(self.home), "status", "--format", "json"])
+
+        self.assertEqual(code, 0)
+        payload = json.loads(output.getvalue())
+        self.assertEqual(payload["status_schema_version"], 1)
+        self.assertEqual(payload["plugin_version"], "0.6.0-rc.1")
+        self.assertEqual(payload["mode"], "core")
+        self.assertEqual(payload["identity_verification"], {"model": False, "role": False})
+
+    def test_status_json_is_emitted_for_degraded_state(self):
+        role = self.home / "agents" / "model-economy-reviewer.toml"
+        role.parent.mkdir(parents=True)
+        role.write_text("sandbox_mode = \"read-only\"\n", encoding="utf-8")
+        output = StringIO()
+
+        with redirect_stdout(output):
+            code = main(["--codex-home", str(self.home), "status", "--format", "json"])
+
+        self.assertEqual(code, 1)
+        self.assertEqual(json.loads(output.getvalue())["mode"], "degraded")
+
     def test_enable_global_routing_uses_explicit_codex_home(self):
         code = main(["--codex-home", str(self.home), "enable-global-routing"])
 

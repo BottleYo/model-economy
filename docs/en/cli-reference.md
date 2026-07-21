@@ -43,6 +43,14 @@ python3 plugins/model-economy/scripts/model_economy.py doctor [--smoke]
 
 Diagnoses local prerequisites and installation state. `--smoke` attempts a subagent launch. It does not verify role or model identity.
 
+## `status`
+
+```sh
+python3 plugins/model-economy/scripts/model_economy.py status [--format text|json]
+```
+
+Reports the plugin version and inferred `core`, `enhanced`, or `degraded` mode. It reads only Model Economy's own config, state, and six declared role paths; it performs no network or subprocess call. JSON uses stable `status_schema_version: 1`. Core and healthy enhanced modes return `0`; degraded state returns `1`, or `2` for an ownership/hash conflict. Identity fields are always `false`. `core` means only that the local six-role enhancement is absent; it does not prove that the plugin is installed or enabled in Codex.
+
 ## `upgrade`
 
 ```sh

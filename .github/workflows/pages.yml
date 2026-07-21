@@ -1,0 +1,43 @@
+name: pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "assets/**"
+      - "plugins/model-economy/assets/brand/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - name: Build static artifact
+        shell: bash
+        run: |
+          mkdir -p _site/assets _site/brand
+          cp -R site/. _site/
+          cp assets/social-preview.png assets/model-economy-flow-en.svg assets/model-economy-flow-zh-CN.svg _site/assets/
+          cp plugins/model-economy/assets/brand/*.svg _site/brand/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

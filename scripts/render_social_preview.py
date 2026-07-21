@@ -142,7 +142,12 @@ def stored_zlib(data: bytes) -> bytes:
     return bytes(blocks)
 
 
-def save_indexed_png(image: Image.Image, output: Path) -> None:
+def save_indexed_png(
+    image: Image.Image,
+    output: Path,
+    *,
+    palette: tuple[tuple[int, int, int], ...] = PALETTE,
+) -> None:
     pixels = image.tobytes()
     stride = image.width
     scanlines = b"".join(
@@ -150,11 +155,11 @@ def save_indexed_png(image: Image.Image, output: Path) -> None:
         for offset in range(0, len(pixels), stride)
     )
     header = struct.pack(">IIBBBBB", image.width, image.height, 8, 3, 0, 0, 0)
-    palette = bytes(channel for color in PALETTE for channel in color)
+    palette_bytes = bytes(channel for color in palette for channel in color)
     payload = (
         b"\x89PNG\r\n\x1a\n"
         + png_chunk(b"IHDR", header)
-        + png_chunk(b"PLTE", palette)
+        + png_chunk(b"PLTE", palette_bytes)
         + png_chunk(b"IDAT", stored_zlib(scanlines))
         + png_chunk(b"IEND", b"")
     )
@@ -176,7 +181,7 @@ def render(output: Path) -> None:
         draw.rounded_rectangle(bounds, radius=2, fill=AMBER)
     draw_bitmap_text(image, (80, 170), "MODEL ECONOMY", 8, TEXT, bold=True)
     draw_bitmap_text(image, (84, 264), "Rigor scales with risk.", 3, TEXT)
-    draw_bitmap_text(image, (84, 306), "Hard caps. One orchestrator.", 3, MUTED)
+    draw_bitmap_text(image, (84, 306), "Policy caps. One orchestrator.", 3, MUTED)
     for (left, top, _, _), label, scale in PREVIEW_BADGES:
         draw_bitmap_text(image, (left + 12, top + 12), label, scale, BACKGROUND, bold=True)
     draw_bitmap_text(image, (588, 442), "BALANCED / EXECUTE", 2, TEAL, bold=True)

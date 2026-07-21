@@ -1,0 +1,24 @@
+name: 功能建议
+description: 建议新的工作流、兼容性或维护能力
+title: "[Feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 要解决的问题
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: 期望结果
+    validations:
+      required: true
+  - type: textarea
+    id: boundaries
+    attributes:
+      label: 约束与非目标
+      description: 说明安全、隐私、兼容性或成本边界。
+    validations:
+      required: true
