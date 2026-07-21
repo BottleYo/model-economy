@@ -176,7 +176,7 @@ def render(output: Path) -> None:
         draw.rounded_rectangle(bounds, radius=2, fill=AMBER)
     draw_bitmap_text(image, (80, 170), "MODEL ECONOMY", 8, TEXT, bold=True)
     draw_bitmap_text(image, (84, 264), "Rigor scales with risk.", 3, TEXT)
-    draw_bitmap_text(image, (84, 306), "Hard caps. One orchestrator.", 3, MUTED)
+    draw_bitmap_text(image, (84, 306), "Policy caps. One orchestrator.", 3, MUTED)
     for (left, top, _, _), label, scale in PREVIEW_BADGES:
         draw_bitmap_text(image, (left + 12, top + 12), label, scale, BACKGROUND, bold=True)
     draw_bitmap_text(image, (588, 442), "BALANCED / EXECUTE", 2, TEAL, bold=True)

@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Risk-adaptive Codex workflow with policy-level limits on strong-model and subagent use."><title>Model Economy</title><link rel="stylesheet" href="./styles.css"></head>
+<body><main>
+<nav><a href="#english">English</a><a href="#zh-cn">简体中文</a><a href="./support/">Support</a><a href="./privacy/">Privacy</a><a href="./terms/">Terms</a><a href="https://github.com/BottleYo/model-economy">GitHub</a></nav>
+<section class="hero" id="english"><div class="tag">Community open-source Codex plugin</div><h1>Model Economy</h1><p>Use strong models for decisions, not routine work.</p><p class="muted">Model Economy classifies development work by risk, applies policy-level limits to model and subagent requests, and keeps high-risk architecture and final review explicit. It does not promise fixed token savings or verify actual model identity.</p><img src="./assets/social-preview.png" alt="Model Economy product overview"></section>
+<h2>How it works</h2><div class="grid"><article class="card"><h3>Simple</h3><p>Main agent, no subagent, no strong request.</p></article><article class="card"><h3>Mechanical</h3><p>Fixed rules only, with a check for every result.</p></article><article class="card"><h3>Standard</h3><p>Main-agent execution with conditional evidence gates.</p></article><article class="card"><h3>Large / high-risk</h3><p>Architecture and final-review gates when enhanced roles are available.</p></article></div>
+<h2>Core first, enhancement optional</h2><div class="grid"><article class="card"><h3>Core mode</h3><p>All skills work after directory installation without local six-role files. High-risk work fails closed when isolated roles are unavailable.</p></article><article class="card"><h3>Enhanced mode</h3><p>The local CLI optionally installs six managed role definitions. Identity remains unverified.</p></article></div>
+<h2>Install</h2><pre><code>git clone https://github.com/BottleYo/model-economy.git
+cd model-economy
+codex plugin marketplace add .
+codex plugin add model-economy@model-economy-public</code></pre><p>That is the complete core-mode path. The optional enhanced-mode command and removal instructions are in the repository installation guide.</p>
+<section id="zh-cn"><h2>简体中文</h2><div class="card"><p><strong>让强模型负责关键判断，而不是日常机械工作。</strong></p><p>Model Economy 先按风险分类开发任务，再以策略级上限控制模型与 subagent 请求。它不承诺固定 Token 节省，也不验证实际模型或角色身份。</p><p><a href="https://github.com/BottleYo/model-economy/blob/main/README.zh-CN.md">阅读中文 README</a></p></div></section>
+<footer>Model Economy is a community open-source project and is not an official OpenAI product. No analytics, cookies, or telemetry are used on this site.</footer>
+</main></body></html>

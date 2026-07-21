@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 使用讨论
+    url: https://github.com/BottleYo/model-economy/discussions
+    about: 一般问题、案例和工作流想法请进入 Discussions。
+  - name: 安全报告
+    url: https://github.com/BottleYo/model-economy/security/policy
+    about: 漏洞请使用私密安全报告，不要创建公开 Issue。

@@ -1,0 +1,1 @@
+sample_id,task_class,mode,workflow,project_type,total_tokens,input_tokens,output_tokens,cache_read_tokens,estimated_cost,currency,subagent_starts,strong_requests,elapsed_seconds,tests_passed,review_findings,model_identity_verified,role_identity_verified,notes

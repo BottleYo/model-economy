@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1440" viewBox="0 0 1080 1440">
+  <rect width="1080" height="1440" fill="#141719"/>
+  <rect x="72" y="72" width="936" height="1296" rx="30" fill="#1B2023" stroke="#647077" stroke-width="2"/>
+  <text x="116" y="156" fill="#34C6A4" font-family="system-ui, sans-serif" font-size="32" font-weight="700">MODEL ECONOMY · 01/06</text>
+  <text x="116" y="330" textLength="848" lengthAdjust="spacingAndGlyphs" fill="#F5F7F7" font-family="system-ui, sans-serif" font-size="68" font-weight="700">为什么要做模型成本路由？</text>
+  <line x1="116" y1="400" x2="964" y2="400" stroke="#647077" stroke-width="2"/>
+  <text x="116" y="548" textLength="848" lengthAdjust="spacingAndGlyphs" fill="#F6B74D" font-family="system-ui, sans-serif" font-size="46" font-weight="650">日常修改不必套用高风险项目的全部流程</text>
+  <rect x="116" y="690" width="848" height="320" rx="22" fill="#142925" stroke="#34C6A4" stroke-width="2"/>
+  <text x="164" y="812" textLength="752" lengthAdjust="spacingAndGlyphs" fill="#F5F7F7" font-family="system-ui, sans-serif" font-size="40">先看风险，再决定需要多少能力与审查。</text>
+  <text x="116" y="1282" fill="#C8D0D2" font-family="system-ui, sans-serif" font-size="30">社区开源 · 策略级上限 · 无固定节省承诺</text>
+</svg>

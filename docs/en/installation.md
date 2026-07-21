@@ -31,14 +31,17 @@ codex plugin marketplace add .
 codex plugin add model-economy@model-economy-public
 ```
 
-Install one bundled profile:
+This directory-style installation provides **core mode** immediately. The four skills work without user-level role files; start a new task after installation.
+
+To add the optional six-role **enhanced mode**, install the recommended `inherited` profile:
 
 ```sh
 python3 plugins/model-economy/scripts/model_economy.py install --profile inherited
-python3 plugins/model-economy/scripts/model_economy.py install --profile openai-56
+python3 plugins/model-economy/scripts/model_economy.py verify
+python3 plugins/model-economy/scripts/model_economy.py status
 ```
 
-`inherited` leaves agent model selection to the current Codex configuration. `openai-56` writes the bundled three-tier mapping. Run only one command for an initial setup.
+`inherited` leaves agent model selection to the current Codex configuration. The bundled `openai-56` mapping and custom mappings are advanced options; neither verifies model identity.
 
 ## Configure a custom profile
 
@@ -54,6 +57,7 @@ You may also select a bundled profile through `configure --profile inherited` or
 
 ```sh
 python3 plugins/model-economy/scripts/model_economy.py verify
+python3 plugins/model-economy/scripts/model_economy.py status --format json
 python3 plugins/model-economy/scripts/model_economy.py doctor
 python3 plugins/model-economy/scripts/model_economy.py doctor --smoke
 ```
@@ -92,7 +96,7 @@ python3 plugins/model-economy/scripts/model_economy.py upgrade
 python3 plugins/model-economy/scripts/model_economy.py enable-global-routing
 ```
 
-After reinstalling the plugin, the 0.5.0 lightweight leaf skills become discoverable in new tasks. The final command idempotently refreshes the managed global rule so its native default and strict handoff policy stay current. `--force` overwrites a conflicting managed file. Resolve the diff first whenever possible.
+After reinstalling the plugin, the 0.6.0 release-candidate skills become discoverable in new tasks. The final command idempotently refreshes the managed global rule so its native default and strict handoff policy stay current. `--force` overwrites a conflicting managed file. Resolve the diff first whenever possible.
 
 ## Export and import a profile
 
@@ -112,6 +116,8 @@ codex plugin remove model-economy@model-economy-public
 ```
 
 Plain uninstall keeps local plugin configuration. `--purge` also removes managed configuration. Plugin removal does not remove global routing automatically; run `disable-global-routing` first if that is intended.
+
+For cross-device use, clone the same tagged release on the other device, repeat the plugin installation, and use `export-profile` / `import-profile` only for non-secret model-profile preferences. Do not copy the entire `CODEX_HOME`, state file, account data, or authentication material between devices.
 
 ## Alternate Codex location
 

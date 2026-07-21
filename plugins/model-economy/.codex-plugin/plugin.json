@@ -1,10 +1,13 @@
 {
   "name": "model-economy",
-  "version": "0.5.1",
-  "description": "为 Codex 开发任务选择最低可胜任模型角色的成本路由插件",
+  "version": "0.6.0-rc.1",
+  "description": "社区开源的 Codex 成本感知开发路由插件，使用策略级能力与编排上限",
   "author": {
-    "name": "Model Economy Contributors"
+    "name": "Model Economy Contributors",
+    "url": "https://github.com/BottleYo/model-economy"
   },
+  "homepage": "https://bottleyo.github.io/model-economy/",
+  "repository": "https://github.com/BottleYo/model-economy",
   "license": "MIT",
   "keywords": [
     "codex",
@@ -17,7 +20,7 @@
   "interface": {
     "displayName": "Model Economy",
     "shortDescription": "让强模型专注关键判断",
-    "longDescription": "通过稳定角色、可替换模型配置、轻量工程 Skill 和受控 subagent 工作流降低开发额度消耗。",
+    "longDescription": "社区开源项目。核心 Skill 安装后即可运行；可选六角色增强模式提供策略级能力上限、权限边界和受控 subagent 工作流。",
     "developerName": "Model Economy Contributors",
     "category": "Productivity",
     "brandColor": "#1F6F6A",
@@ -27,9 +30,17 @@
     "capabilities": [
       "Interactive"
     ],
+    "websiteURL": "https://bottleyo.github.io/model-economy/",
+    "privacyPolicyURL": "https://bottleyo.github.io/model-economy/privacy/",
+    "termsOfServiceURL": "https://bottleyo.github.io/model-economy/terms/",
     "defaultPrompt": [
       "按成本感知流程处理这个开发任务。",
-      "评估这个任务应该使用哪个模型角色。"
+      "评估这个任务应该使用哪个模型角色。",
+      "检查 Model Economy 当前是核心、增强还是降级状态。"
+    ],
+    "screenshots": [
+      "./assets/screenshots/core-mode.png",
+      "./assets/screenshots/enhanced-mode.png"
     ]
   }
 }

@@ -1,0 +1,32 @@
+name: 安装问题
+description: 报告安装、升级、诊断或卸载问题
+title: "[Install] "
+labels: ["installation"]
+body:
+  - type: input
+    id: command
+    attributes:
+      label: 失败命令
+      description: 只提供公开命令，不附加环境变量值或凭据。
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: 环境
+      description: 操作系统、Python、Codex 和插件版本。
+    validations:
+      required: true
+  - type: textarea
+    id: summary
+    attributes:
+      label: 脱敏错误摘要
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: 隐私确认
+      options:
+        - label: 我没有附加认证文件、原始 session、私人路径或项目数据。
+          required: true

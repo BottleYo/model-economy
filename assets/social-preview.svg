@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-labelledby="title description">
   <title id="title">Model Economy</title>
-  <desc id="description">Rigor scales with risk. Hard caps. One orchestrator.</desc>
+  <desc id="description">Rigor scales with risk. Policy caps. One orchestrator.</desc>
   <rect width="1280" height="640" fill="#141719"/>
   <path d="M80 130H1200" fill="none" stroke="#647077" stroke-width="2"/>
   <path d="M80 496H1200" fill="none" stroke="#647077" stroke-width="2"/>
@@ -18,7 +18,7 @@
   <g fill="#F5F7F7" font-family="Arial, Helvetica, sans-serif">
     <text x="80" y="230" font-size="68" font-weight="700" letter-spacing="1">MODEL ECONOMY</text>
     <text x="84" y="286" font-size="27">Rigor scales with risk.</text>
-    <text x="84" y="324" font-size="27" fill="#C8D0D2">Hard caps. One orchestrator.</text>
+    <text x="84" y="324" font-size="27" fill="#C8D0D2">Policy caps. One orchestrator.</text>
     <text x="80" y="554" font-size="20" font-weight="700" letter-spacing="1">STRONG 0/1/2 · SUBAGENTS 3 MAX · NATIVE GATES</text>
   </g>
   <text x="588" y="458" fill="#34C6A4" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" letter-spacing="2">BALANCED / EXECUTE</text>

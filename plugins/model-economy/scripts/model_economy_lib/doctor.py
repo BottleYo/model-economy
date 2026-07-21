@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import stat
 import subprocess
 import sys
 import tomllib
@@ -35,6 +36,22 @@ class SmokeReport:
     subagent_started: bool
     agent_type_verified: bool = False
     model_identity_verified: bool = False
+
+
+@dataclass(frozen=True)
+class StatusReport:
+    """Read-only summary of the optional six-role enhancement."""
+
+    plugin_version: str
+    mode: str
+    enhancement_state: str
+    role_files_expected: int
+    role_files_present: int
+    role_hashes_match: bool | None
+    model_mapping_status: str
+    installed_template_version: str | None
+    template_current: bool | None
+    exit_code: int
 
 
 def find_codex(codex_bin: str | None, env: Mapping[str, str] | None = None) -> str | None:
@@ -79,6 +96,223 @@ def _role_models_match(config_models: dict[str, str], role_paths: dict[str, Path
     except (OSError, tomllib.TOMLDecodeError):
         return False
     return True
+
+
+def _status_artifact_exists(path: Path) -> bool:
+    """Treat even a broken symlink as an enhancement trace without following it."""
+    return path.exists() or path.is_symlink()
+
+
+def _status_artifact_is_safe(path: Path, codex_home: Path) -> bool:
+    """Allow status to read only regular, singly linked managed artifacts."""
+    if path != codex_home and codex_home not in path.parents:
+        return False
+    current = path
+    while True:
+        if current.is_symlink():
+            return False
+        if current == codex_home:
+            break
+        current = current.parent
+    try:
+        metadata = path.stat()
+    except OSError:
+        return False
+    return stat.S_ISREG(metadata.st_mode) and metadata.st_nlink == 1
+
+
+def status_to_dict(report: StatusReport) -> dict[str, object]:
+    """Return the stable public status schema."""
+    return {
+        "status_schema_version": 1,
+        "plugin_version": report.plugin_version,
+        "mode": report.mode,
+        "enhancement": {
+            "state": report.enhancement_state,
+            "role_files": {
+                "expected": report.role_files_expected,
+                "present": report.role_files_present,
+                "hashes_match": report.role_hashes_match,
+            },
+            "model_mapping": {"status": report.model_mapping_status},
+            "template_version": {
+                "bundled": report.plugin_version,
+                "installed": report.installed_template_version,
+                "current": report.template_current,
+            },
+        },
+        "identity_verification": {"role": False, "model": False},
+    }
+
+
+def inspect_status(context: Context) -> StatusReport:
+    """Infer core, enhanced, or degraded mode from managed local artifacts only."""
+    role_paths = {f"{role.name}.toml": context.agents_dir / f"{role.name}.toml" for role in ROLES}
+    present = sum(_status_artifact_exists(path) for path in role_paths.values())
+    traced_paths = (*role_paths.values(), context.config_path, context.state_path)
+    traces_exist = any(_status_artifact_exists(path) for path in traced_paths)
+    base = {
+        "plugin_version": context.template_version,
+        "role_files_expected": len(role_paths),
+        "role_files_present": present,
+    }
+
+    if not traces_exist:
+        return StatusReport(
+            **base,
+            mode="core",
+            enhancement_state="absent",
+            role_hashes_match=None,
+            model_mapping_status="not_installed",
+            installed_template_version=None,
+            template_current=None,
+            exit_code=0,
+        )
+
+    unsafe_artifacts = any(
+        _status_artifact_exists(path)
+        and not _status_artifact_is_safe(path, context.codex_home)
+        for path in traced_paths
+    )
+    if unsafe_artifacts:
+        return StatusReport(
+            **base,
+            mode="degraded",
+            enhancement_state="conflict",
+            role_hashes_match=False,
+            model_mapping_status="invalid",
+            installed_template_version=None,
+            template_current=None,
+            exit_code=2,
+        )
+
+    try:
+        config = load_config(context.config_path)
+        state = load_state(context.state_path)
+    except ConfigError:
+        return StatusReport(
+            **base,
+            mode="degraded",
+            enhancement_state="incomplete",
+            role_hashes_match=None,
+            model_mapping_status="invalid",
+            installed_template_version=None,
+            template_current=None,
+            exit_code=1,
+        )
+
+    recorded_names = set(state.managed_files)
+    expected_names = set(role_paths)
+    try:
+        config_hash_matches = sha256_bytes(context.config_path.read_bytes()) == state.config_sha256
+        invalid_names = bool(recorded_names - expected_names)
+        unowned_roles = any(
+            path.is_file() and filename not in recorded_names
+            for filename, path in role_paths.items()
+        )
+        recorded_missing = any(
+            filename in recorded_names and not path.is_file()
+            for filename, path in role_paths.items()
+        )
+        recorded_changed = any(
+            filename in recorded_names
+            and path.is_file()
+            and sha256_bytes(path.read_bytes()) != state.managed_files[filename]
+            for filename, path in role_paths.items()
+        )
+    except OSError:
+        return StatusReport(
+            **base,
+            mode="degraded",
+            enhancement_state="incomplete",
+            role_hashes_match=None,
+            model_mapping_status="invalid",
+            installed_template_version=state.template_version,
+            template_current=state.template_version == context.template_version,
+            exit_code=1,
+        )
+    hashes_match = not (invalid_names or unowned_roles or recorded_missing or recorded_changed)
+
+    if not state.managed_files and present == 0 and config_hash_matches:
+        return StatusReport(
+            **base,
+            mode="core",
+            enhancement_state="absent",
+            role_hashes_match=None,
+            model_mapping_status="not_installed",
+            installed_template_version=state.template_version,
+            template_current=state.template_version == context.template_version,
+            exit_code=0,
+        )
+
+    if not config_hash_matches or invalid_names or unowned_roles or recorded_changed:
+        return StatusReport(
+            **base,
+            mode="degraded",
+            enhancement_state="conflict",
+            role_hashes_match=False,
+            model_mapping_status="mismatch" if config.models else "inherited",
+            installed_template_version=state.template_version,
+            template_current=state.template_version == context.template_version,
+            exit_code=2,
+        )
+
+    mapping_status = (
+        "inherited"
+        if not config.models
+        else "explicit"
+        if set(config.models) == {"strong", "balanced", "economy"}
+        else "invalid"
+    )
+    if present == len(role_paths) and not _role_models_match(config.models, role_paths):
+        mapping_status = "mismatch"
+
+    if recorded_names != expected_names or recorded_missing or present != len(role_paths):
+        return StatusReport(
+            **base,
+            mode="degraded",
+            enhancement_state="incomplete",
+            role_hashes_match=hashes_match,
+            model_mapping_status=mapping_status,
+            installed_template_version=state.template_version,
+            template_current=state.template_version == context.template_version,
+            exit_code=1,
+        )
+
+    if mapping_status in {"invalid", "mismatch"}:
+        return StatusReport(
+            **base,
+            mode="degraded",
+            enhancement_state="incomplete",
+            role_hashes_match=hashes_match,
+            model_mapping_status=mapping_status,
+            installed_template_version=state.template_version,
+            template_current=state.template_version == context.template_version,
+            exit_code=1,
+        )
+
+    if state.template_version != context.template_version:
+        return StatusReport(
+            **base,
+            mode="degraded",
+            enhancement_state="outdated",
+            role_hashes_match=hashes_match,
+            model_mapping_status=mapping_status,
+            installed_template_version=state.template_version,
+            template_current=False,
+            exit_code=1,
+        )
+
+    return StatusReport(
+        **base,
+        mode="enhanced",
+        enhancement_state="healthy",
+        role_hashes_match=hashes_match,
+        model_mapping_status=mapping_status,
+        installed_template_version=state.template_version,
+        template_current=True,
+        exit_code=0,
+    )
 
 
 def verify_installation(context: Context) -> VerificationReport:

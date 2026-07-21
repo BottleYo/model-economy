@@ -31,14 +31,17 @@ codex plugin marketplace add .
 codex plugin add model-economy@model-economy-public
 ```
 
-安装一个内置档案：
+完成上述目录式安装后即可使用**核心模式**。四个 Skill 不依赖用户级角色文件；安装后请新建任务。
+
+若需要可选的六角色**增强模式**，推荐安装 `inherited` 档案：
 
 ```sh
 python3 plugins/model-economy/scripts/model_economy.py install --profile inherited
-python3 plugins/model-economy/scripts/model_economy.py install --profile openai-56
+python3 plugins/model-economy/scripts/model_economy.py verify
+python3 plugins/model-economy/scripts/model_economy.py status
 ```
 
-`inherited` 让角色继续继承当前 Codex 的模型配置；`openai-56` 会写入内置的三档映射。首次配置只需选择其中一条命令。
+`inherited` 让角色继续继承当前 Codex 的模型配置。内置 `openai-56` 映射和自定义映射属于进阶选项；两者都不能证明模型身份。
 
 ## 配置自定义档案
 
@@ -54,6 +57,7 @@ python3 plugins/model-economy/scripts/model_economy.py configure --strong <stron
 
 ```sh
 python3 plugins/model-economy/scripts/model_economy.py verify
+python3 plugins/model-economy/scripts/model_economy.py status --format json
 python3 plugins/model-economy/scripts/model_economy.py doctor
 python3 plugins/model-economy/scripts/model_economy.py doctor --smoke
 ```
@@ -92,7 +96,7 @@ python3 plugins/model-economy/scripts/model_economy.py upgrade
 python3 plugins/model-economy/scripts/model_economy.py enable-global-routing
 ```
 
-重新安装插件后，0.5.0 的轻量叶子 Skill 会在新任务中可发现；最后一条命令会幂等刷新受管理全局规则，使原生默认和 strict 交权规则保持最新。`--force` 会覆盖冲突的受管理文件。通常应先处理差异。
+重新安装插件后，0.6.0 候选版的 Skill 会在新任务中可发现；最后一条命令会幂等刷新受管理全局规则，使原生默认和 strict 交权规则保持最新。`--force` 会覆盖冲突的受管理文件。通常应先处理差异。
 
 ## 导出与导入档案
 
@@ -112,6 +116,8 @@ codex plugin remove model-economy@model-economy-public
 ```
 
 普通卸载保留本地插件配置；`--purge` 同时删除受管理配置。移除插件不会自动删除全局路由；如需移除，请先运行 `disable-global-routing`。
+
+跨设备使用时，应在另一台设备克隆同一发布标签、重新安装插件，并只用 `export-profile` / `import-profile` 迁移不含密钥的模型档案偏好。不要复制整个 `CODEX_HOME`、状态文件、账户数据或认证材料。
 
 ## 指定 Codex 位置
 

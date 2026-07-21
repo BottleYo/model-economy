@@ -4,6 +4,14 @@
 
 Model Economy is a workflow policy, not an automated claim about model quality or spend. The policy classifies work first, then limits which roles can participate.
 
+## Installation modes
+
+- **Core:** all skills run without local six-role configuration. Simple, mechanical, and standard tasks use the main agent with native quality gates. No custom role or independent model identity is claimed.
+- **Enhanced:** all six managed role files, hashes, mapping, and template version must be healthy before six-role routing is allowed.
+- **Degraded:** partial, conflicting, or outdated enhancement artifacts fail closed and are never silently treated as core.
+
+Core mode cannot satisfy isolated architect and final-reviewer gates for large/high-risk work. It reports that limitation and asks the user to install enhanced mode or explicitly approve a reduced-assurance single-agent path. The latter is never reported as the complete Model Economy high-risk workflow.
+
 ## Classification order
 
 Classification is `first_match` in this order:
@@ -13,7 +21,7 @@ Classification is `first_match` in this order:
 3. **Simple** only when files are known, no open judgment remains, verification is direct, and there is no creative or behavioral change.
 4. **Standard** is the fallback.
 
-## Capability gates
+## Enhanced-mode capability gates
 
 | Class | Role and capability rules | `strong` maximum |
 | --- | --- | --- |

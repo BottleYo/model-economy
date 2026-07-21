@@ -43,6 +43,14 @@ python3 plugins/model-economy/scripts/model_economy.py doctor [--smoke]
 
 诊断本地前置条件和安装状态。`--smoke` 会尝试启动 Subagent，但不验证角色或模型身份。
 
+## `status`
+
+```sh
+python3 plugins/model-economy/scripts/model_economy.py status [--format text|json]
+```
+
+报告插件版本以及推断得到的 `core`、`enhanced` 或 `degraded` 模式。该命令只读取 Model Economy 自己的配置、状态和六个声明过的角色路径，不联网、不启动子进程。JSON 使用稳定的 `status_schema_version: 1`。核心模式和健康增强模式返回 `0`；降级状态返回 `1`，归属或哈希冲突返回 `2`。身份字段始终为 `false`。`core` 只表示本地六角色增强缺失，不能证明 Codex 已安装或启用插件。
+
 ## `upgrade`
 
 ```sh
