@@ -162,7 +162,7 @@ The adapter reports CodexBar's local token totals, model breakdowns, and estimat
 
 ## Lightweight engineering skills
 
-The 0.6.0 release candidate includes three independently triggered leaf skills:
+The 0.6.0 release includes three independently triggered leaf skills:
 
 - `domain-context` extracts only the domain vocabulary, invariants, and ADR constraints needed by the current task.
 - `module-design` checks module boundaries, knowledge leakage, and change surface, then suggests the smallest structural improvement.

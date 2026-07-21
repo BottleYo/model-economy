@@ -1,6 +1,6 @@
 # Model Economy 0.6.0-rc.1 GitHub Pre-release 草案
 
-> 这是预发布文案草案，不表示 tag、GitHub Pre-release 或公开页面已经创建。
+> 历史文案：`v0.6.0-rc.1` 标签与 GitHub Pre-release 已于 2026-07-21 发布；稳定版发布后请使用 `release-0.6.0.md`。
 
 ## English
 

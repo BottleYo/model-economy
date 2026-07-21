@@ -162,7 +162,7 @@ python3 plugins/model-economy/scripts/model_economy.py usage --format json
 
 ## 轻量工程能力
 
-0.6.0 候选版提供三个可独立触发的叶子 Skill：
+0.6.0 提供三个可独立触发的叶子 Skill：
 
 - `domain-context`：只提炼当前任务需要的领域术语、不变量与 ADR 约束。
 - `module-design`：检查模块边界、知识泄漏和变更面，给出最小结构改进。

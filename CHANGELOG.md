@@ -4,17 +4,15 @@
 
 This project follows Semantic Versioning. Notable changes are recorded here.
 
-## 0.6.0-rc.1 - Unreleased release candidate (implemented 2026-07-21)
+## 0.6.0 - 2026-07-21
 
 - Added directory-safe core mode, optional six-role enhanced mode, and fail-closed degraded handling without changing the local config/state schema.
 - Added the read-only `status --format text|json` interface with stable schema version 1 and explicit unverified identity fields.
-- Prepared—but did not submit—the skills-only Plugins Directory package with five positive and three negative review cases.
-
-## 0.5.2 - Unreleased milestone (implemented 2026-07-21)
-
 - Added a static bilingual GitHub Pages site, community health files, support/legal pages, issue templates, promotion assets, and an A/B evaluation protocol without telemetry or fixed savings claims.
 - Expanded the manifest with public publisher, repository, website, legal, starter-prompt, and PNG screenshot metadata.
 - Reworked the first-run documentation around the recommended inherited enhancement, three risk-level examples, explicit stop/removal controls, and cross-device guidance.
+- Validated the core and enhanced lifecycle through a real local marketplace install, reinstall, upgrade, removal, and cross-platform CI.
+- Prepared—but did not submit—the skills-only Plugins Directory package with five positive and three negative review cases.
 
 ## 0.5.1 - 2026-07-13
 

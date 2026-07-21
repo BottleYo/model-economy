@@ -40,4 +40,4 @@ I built Model Economy, a community Codex plugin that classifies development work
 
 ## 发布顺序
 
-GitHub Pages 与支持入口上线后，先发布 `0.6.0-rc.1` GitHub Pre-release；随后依次在 GitHub、X、中文技术社区和小红书进行软启动。推广期间使用评估协议收集真实样本，核心安装缺陷会暂停扩大投放。真实 marketplace 与 8 个审核用例通过后，再发布正式 `0.6.0`。
+GitHub Pages、支持入口、`0.6.0-rc.1` Pre-release、真实 marketplace 生命周期与审核材料通过后，发布稳定版 `0.6.0`；随后依次在 GitHub、X、中文技术社区和小红书进行软启动。推广期间使用评估协议收集真实样本，核心安装缺陷会暂停扩大投放。官方目录身份验证和正式提交仍由发布者在后续单独完成。
