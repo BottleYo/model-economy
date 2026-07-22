@@ -1,6 +1,6 @@
 {
   "name": "model-economy",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "社区开源的 Codex 成本感知开发路由插件，使用策略级能力与编排上限",
   "author": {
     "name": "Model Economy Contributors",

@@ -162,7 +162,7 @@ python3 plugins/model-economy/scripts/model_economy.py usage --format json
 
 ## 轻量工程能力
 
-0.6.0 提供三个可独立触发的叶子 Skill：
+插件提供三个可独立触发的叶子 Skill：
 
 - `domain-context`：只提炼当前任务需要的领域术语、不变量与 ADR 约束。
 - `module-design`：检查模块边界、知识泄漏和变更面，给出最小结构改进。
@@ -177,6 +177,8 @@ python3 plugins/model-economy/scripts/model_economy.py usage --format json
 ## 安全与信任边界
 
 本地 CLI 只管理 `CODEX_HOME` 下自己的配置、声明过的角色文件，以及 `$CODEX_HOME/AGENTS.md` 中带标记的 Model Economy 受管理区块；缺失、损坏或冲突的受管理状态会失败关闭。只有用户明确授权的 `--force` 操作可以越过相应的归属或冲突保护。它不管理凭据、项目数据、未归属文件、其他插件，也不接管 `CODEX_HOME` 的访问控制。
+
+普通 `doctor` 只验证受管理本地文件并执行 `codex --version`，不会调用检查范围更广的 `codex doctor`，也不会检查认证、session 或数据库工件。`doctor --smoke` 是另一项显式选择，会启动一次经过认证的临时 Codex 运行，并可能产生用量。
 
 `doctor --smoke` 只能观察 subagent 是否启动。当前 Codex JSONL 不提供 `agent_type`，因此角色身份和模型身份均未验证。报告漏洞前请阅读[安全策略](SECURITY.zh-CN.md)。
 

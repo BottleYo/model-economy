@@ -4,6 +4,13 @@
 
 This project follows Semantic Versioning. Notable changes are recorded here.
 
+## 0.6.1 - 2026-07-22
+
+- Narrowed plain `doctor` to managed-file verification plus `codex --version`, avoiding the broader Codex diagnostic that inspects authentication and local state metadata.
+- Documented `doctor --smoke` as an explicit authenticated, usage-consuming opt-in while keeping role and model identity unverified.
+- Added a deterministic Skills-only submission packager that rejects MCP/app fields and excludes directory-unsupported screenshot metadata and files.
+- Updated the Plugins Directory candidate materials, field limits, eight review cases, and package verification guidance without creating or submitting a portal draft.
+
 ## 0.6.0 - 2026-07-21
 
 - Added directory-safe core mode, optional six-role enhanced mode, and fail-closed degraded handling without changing the local config/state schema.

@@ -1,4 +1,3 @@
-import json
 import os
 import shutil
 import subprocess
@@ -47,8 +46,8 @@ class DoctorTests(unittest.TestCase):
         self.assertFalse(report.codex_available)
         self.assertFalse(report.model_identity_verified)
 
-    def test_doctor_runs_codex_doctor_with_explicit_home(self):
-        completed = CompletedProcess(["codex"], 0, stdout=json.dumps({"status": "ok"}), stderr="")
+    def test_doctor_runs_bounded_version_check_with_explicit_home(self):
+        completed = CompletedProcess(["codex"], 0, stdout="codex-cli 0.144.6\n", stderr="")
         with patch("model_economy_lib.doctor.find_codex", return_value="codex"), patch(
             "model_economy_lib.doctor._is_executable", return_value=True
         ), patch(
@@ -56,14 +55,14 @@ class DoctorTests(unittest.TestCase):
         ) as run:
             report = run_doctor(self.context)
         self.assertTrue(report.ok)
-        self.assertEqual(run.call_args.args[0], ["codex", "doctor", "--json"])
+        self.assertEqual(run.call_args.args[0], ["codex", "--version"])
         self.assertEqual(run.call_args.kwargs["env"]["CODEX_HOME"], str(self.home))
-        self.assertEqual(run.call_args.kwargs["timeout"], 30)
+        self.assertEqual(run.call_args.kwargs["timeout"], 10)
 
-    def test_doctor_rejects_json_array_or_scalar_output(self):
-        for payload in ("[]", '"ok"', "null"):
-            completed = CompletedProcess(["codex"], 0, stdout=payload, stderr="")
-            with self.subTest(payload=payload), patch(
+    def test_doctor_rejects_empty_or_unrelated_version_output(self):
+        for output in ("", "0.144.6", "another-cli 0.144.6"):
+            completed = CompletedProcess(["codex"], 0, stdout=output, stderr="")
+            with self.subTest(output=output), patch(
                 "model_economy_lib.doctor.find_codex", return_value="codex"
             ), patch("model_economy_lib.doctor._is_executable", return_value=True), patch(
                 "model_economy_lib.doctor.subprocess.run", return_value=completed
@@ -93,6 +92,24 @@ class DoctorTests(unittest.TestCase):
         self.assertFalse(report.ok)
         self.assertFalse(report.checks["template_version"])
 
+    def test_verification_rejects_symlinked_artifact_before_loading_it(self):
+        outside = Path(self.temporary_directory.name) / "outside-config.toml"
+        outside.write_text('schema_version = 1\nprofile = "outside"\n', encoding="utf-8")
+        self.context.config_path.unlink()
+        try:
+            self.context.config_path.symlink_to(outside)
+        except OSError as exc:
+            self.skipTest(f"symlinks are unavailable: {exc}")
+
+        with patch(
+            "model_economy_lib.doctor.load_config",
+            side_effect=AssertionError("unsafe artifact must not be loaded"),
+        ):
+            report = verify_installation(self.context)
+
+        self.assertFalse(report.ok)
+        self.assertFalse(report.checks["artifact_safety"])
+
     def test_verification_checks_rendered_role_models_against_config_mapping(self):
         install(
             self.context,
@@ -114,7 +131,7 @@ class DoctorTests(unittest.TestCase):
     def test_doctor_reports_a_codex_timeout_as_failure(self):
         with patch("model_economy_lib.doctor.find_codex", return_value="codex"), patch(
             "model_economy_lib.doctor.subprocess.run",
-            side_effect=TimeoutExpired(["codex", "doctor"], 30),
+            side_effect=TimeoutExpired(["codex", "--version"], 10),
         ):
             report = run_doctor(self.context)
         self.assertFalse(report.ok)
@@ -269,6 +286,8 @@ class DoctorTests(unittest.TestCase):
 
     def test_doctor_source_never_scans_session_or_database_artifacts(self):
         source = (SCRIPTS / "model_economy_lib" / "doctor.py").read_text(encoding="utf-8").lower()
+        self.assertNotIn('[codex_bin, "doctor", "--json"]', source)
+        self.assertNotIn("auth.json", source)
         self.assertNotIn("history.jsonl", source)
         self.assertNotIn("sqlite", source)
         self.assertNotIn("rollout", source)

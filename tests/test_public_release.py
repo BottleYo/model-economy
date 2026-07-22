@@ -30,6 +30,7 @@ class PublicReleaseTests(unittest.TestCase):
             "docs/promotion/release-0.6.0-rc.1.md",
             "docs/promotion/release-0.6.0.md",
             "docs/submission/0.6.0.md",
+            "docs/submission/0.6.1.md",
             "docs/submission/fixtures/README.md",
             "docs/release/0.6.0-rc.1-readiness.md",
         )
