@@ -8,6 +8,15 @@ English: Use strong models for decisions, not routine work.
 
 统一限定：策略级上限控制请求范围；不承诺固定 Token 节省；不验证实际模型或角色身份；社区项目，不代表 OpenAI 官方产品。
 
+## 可直接使用的成品
+
+- [X 首周双语内容包](x-first-week.md)：英文主帖、中文镜像、自回复、图片替代文本与发布后记录规则。
+- `assets/promotion/x/`：X 可上传 PNG 与同名可编辑 SVG；发布时使用 PNG。
+- `assets/promotion/xiaohongshu-01.png` 至 `xiaohongshu-06.png`：六张 1080×1440 小红书卡片；同名 SVG 是可编辑源文件。
+- `assets/social-preview.png`：通用 GitHub/X 社交预览图。
+
+个人账号发布前可以改写措辞，但不得改变版本、链接、测试状态和公开限制。最终实际发布文本应作为后续语气校准样本，而不是要求 AI 固定模仿某位博主。
+
 ## 演示分镜
 
 1. 展示同一重流程处理所有任务造成的等待与编排开销。

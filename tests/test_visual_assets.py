@@ -20,6 +20,25 @@ SVG_ASSETS = (
 PNG_ASSET = ROOT / "assets/social-preview.png"
 RENDER_SCRIPT = ROOT / "scripts/render_social_preview.py"
 SVG_NAMESPACE = {"svg": "http://www.w3.org/2000/svg"}
+X_PROMOTION_SVGS = (
+    "assets/promotion/x/builder-workbench.svg",
+    "assets/promotion/x/project-01.svg",
+    "assets/promotion/x/route-by-risk.svg",
+    "assets/promotion/x/claim-boundaries.svg",
+    "assets/promotion/x/real-task-wanted.svg",
+)
+X_PROMOTION_PNGS = {
+    "assets/promotion/x/builder-workbench.png": (1600, 900),
+    "assets/promotion/x/project-01.png": (1600, 900),
+    "assets/promotion/x/route-by-risk.png": (1600, 900),
+    "assets/promotion/x/claim-boundaries.png": (1600, 900),
+    "assets/promotion/x/model-economy-flow-en.png": (1440, 760),
+    "assets/promotion/x/real-task-wanted.png": (1600, 900),
+}
+XIAOHONGSHU_PNGS = tuple(
+    f"assets/promotion/xiaohongshu-{number:02d}.png" for number in range(1, 7)
+)
+X_CONTENT_PLAN = ROOT / "docs/promotion/x-first-week.md"
 
 
 def estimated_text_width(text: str, font_size: float) -> float:
@@ -87,6 +106,49 @@ class VisualAssetTests(unittest.TestCase):
                 ET.fromstring(source)
                 self.assertFalse(any(token in source for token in prohibited))
                 self.assertNotIn("href=", source)
+
+    def test_x_promotion_assets_are_platform_ready(self):
+        for relative_path in X_PROMOTION_SVGS:
+            with self.subTest(path=relative_path):
+                source = (ROOT / relative_path).read_text(encoding="utf-8")
+                root = ET.fromstring(source)
+                self.assertEqual(root.attrib.get("width"), "1600")
+                self.assertEqual(root.attrib.get("height"), "900")
+                self.assertNotIn("href=", source)
+                self.assertNotIn("<script", source)
+
+        for relative_path, expected_size in X_PROMOTION_PNGS.items():
+            with self.subTest(path=relative_path):
+                path = ROOT / relative_path
+                self.assertTrue(path.is_file())
+                with Image.open(path) as image:
+                    self.assertEqual(image.format, "PNG")
+                    self.assertEqual(image.size, expected_size)
+
+    def test_xiaohongshu_cards_have_uploadable_png_copies(self):
+        for relative_path in XIAOHONGSHU_PNGS:
+            with self.subTest(path=relative_path):
+                path = ROOT / relative_path
+                self.assertTrue(path.is_file())
+                with Image.open(path) as image:
+                    self.assertEqual(image.format, "PNG")
+                    self.assertEqual(image.size, (1080, 1440))
+
+    def test_x_content_plan_references_existing_upload_assets(self):
+        source = X_CONTENT_PLAN.read_text(encoding="utf-8")
+        referenced_assets = set()
+        for line in source.splitlines():
+            for fragment in line.split("`")[1::2]:
+                if fragment.endswith((".png", ".svg")):
+                    referenced_assets.add(fragment)
+
+        self.assertTrue(referenced_assets)
+        for relative_path in referenced_assets:
+            with self.subTest(path=relative_path):
+                path = ROOT / relative_path
+                if not path.is_file():
+                    path = ROOT / "assets/promotion" / relative_path
+                self.assertTrue(path.is_file(), f"missing promotion asset: {relative_path}")
 
     def test_flow_assets_show_all_classification_routes(self):
         expected_routes = {"simple", "standard", "large-high-risk", "mechanical"}
