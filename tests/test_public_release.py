@@ -25,7 +25,6 @@ class PublicReleaseTests(unittest.TestCase):
             "docs/evaluation/0.6.0-pilot-protocol.md",
             "docs/evaluation/0.6.0-pilot-template.csv",
             "docs/promotion/launch-kit.md",
-            "docs/promotion/x-first-week.md",
             "docs/promotion/technical-article.zh-CN.md",
             "docs/promotion/release-0.5.2.md",
             "docs/promotion/release-0.6.0-rc.1.md",
