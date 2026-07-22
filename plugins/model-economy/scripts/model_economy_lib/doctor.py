@@ -317,22 +317,30 @@ def inspect_status(context: Context) -> StatusReport:
 
 def verify_installation(context: Context) -> VerificationReport:
     """Check local files only; this deliberately performs no Codex invocation."""
+    role_paths = {f"{role.name}.toml": context.agents_dir / f"{role.name}.toml" for role in ROLES}
     checks = {
         "python": sys.version_info >= (3, 11),
         "directory": _directory_is_accessible(context.codex_home),
+        "artifact_safety": False,
         "roles": False,
         "role_hashes": False,
         "config_hash": False,
         "model_mapping": False,
         "template_version": False,
     }
+    managed_paths = (*role_paths.values(), context.config_path, context.state_path)
+    checks["artifact_safety"] = all(
+        _status_artifact_exists(path) and _status_artifact_is_safe(path, context.codex_home)
+        for path in managed_paths
+    )
+    if not checks["artifact_safety"]:
+        return VerificationReport(False, checks)
     try:
         config = load_config(context.config_path)
         state = load_state(context.state_path)
     except ConfigError:
         return VerificationReport(False, checks)
 
-    role_paths = {f"{role.name}.toml": context.agents_dir / f"{role.name}.toml" for role in ROLES}
     checks["roles"] = all(path.is_file() for path in role_paths.values())
     checks["role_hashes"] = checks["roles"] and set(state.managed_files) == set(role_paths) and all(
         sha256_bytes(path.read_bytes()) == state.managed_files[filename]
@@ -348,27 +356,25 @@ def verify_installation(context: Context) -> VerificationReport:
     return VerificationReport(all(checks.values()), checks)
 
 
-def _run_codex_doctor(
+def _run_codex_version_check(
     codex_bin: str, context: Context, env: Mapping[str, str] | None = None
 ) -> bool:
+    """Confirm the executable responds without invoking broad Codex diagnostics."""
     try:
         completed = subprocess.run(
-            [codex_bin, "doctor", "--json"],
+            [codex_bin, "--version"],
             env=_codex_environment(context, env),
             capture_output=True,
             text=True,
-            timeout=30,
+            timeout=10,
             check=False,
         )
     except (OSError, subprocess.TimeoutExpired):
         return False
     if completed.returncode != 0:
         return False
-    try:
-        document = json.loads(completed.stdout)
-    except (TypeError, json.JSONDecodeError):
-        return False
-    return isinstance(document, dict)
+    output = completed.stdout.strip().lower()
+    return output.startswith(("codex ", "codex-cli "))
 
 
 def run_doctor(
@@ -376,11 +382,11 @@ def run_doctor(
     codex_bin: str | None = None,
     env: Mapping[str, str] | None = None,
 ) -> DoctorReport:
-    """Combine local verification with Codex's supported diagnostic command."""
+    """Combine local verification with a bounded Codex availability check."""
     local = verify_installation(context)
     executable = find_codex(codex_bin, env)
     codex_available = executable is not None and _is_executable(executable)
-    codex_ok = codex_available and _run_codex_doctor(executable, context, env)
+    codex_ok = codex_available and _run_codex_version_check(executable, context, env)
     checks = {**local.checks, "codex": codex_ok}
     return DoctorReport(
         ok=all(checks.values()),

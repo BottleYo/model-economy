@@ -1,8 +1,8 @@
 # 官方审核合成 Fixture
 
-这些文件只用于 Model Economy 0.6.0 的公开审核测试，不包含真实账户、认证信息、网络访问或生产数据。提交后，审核材料使用发布标签中的稳定 URL：
+这些文件只用于 Model Economy 0.6.1 的公开审核测试，不包含真实账户、认证信息、网络访问或生产数据。提交后，审核材料使用发布标签中的稳定 URL：
 
-`https://github.com/BottleYo/model-economy/tree/v0.6.0/docs/submission/fixtures`
+`https://github.com/BottleYo/model-economy/tree/v0.6.1/docs/submission/fixtures`
 
 ## 对应关系
 

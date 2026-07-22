@@ -162,7 +162,7 @@ The adapter reports CodexBar's local token totals, model breakdowns, and estimat
 
 ## Lightweight engineering skills
 
-The 0.6.0 release includes three independently triggered leaf skills:
+The plugin includes three independently triggered leaf skills:
 
 - `domain-context` extracts only the domain vocabulary, invariants, and ADR constraints needed by the current task.
 - `module-design` checks module boundaries, knowledge leakage, and change surface, then suggests the smallest structural improvement.
@@ -177,6 +177,8 @@ These skills start no subagents, do not change task classification, model mappin
 ## Security and trust boundaries
 
 The local CLI manages only its configuration, its declared agent files under `CODEX_HOME`, and the marked, managed Model Economy block in `$CODEX_HOME/AGENTS.md`. It fails closed on missing, damaged, or conflicting managed state. Only an explicit user-authorized `--force` operation overrides the relevant ownership or conflict guard. It does not manage credentials, project data, unowned files, other plugins, or access control for `CODEX_HOME`.
+
+Plain `doctor` verifies managed local files and checks `codex --version`; it does not invoke the broader `codex doctor`, inspect authentication, or scan session and database artifacts. `doctor --smoke` is a separate explicit opt-in that starts an ephemeral authenticated Codex run and may consume usage.
 
 `doctor --smoke` can observe whether a subagent starts. Current Codex JSONL does not provide `agent_type`, so role identity and model identity remain unverified. Read [Security](SECURITY.md) before reporting a vulnerability.
 

@@ -168,7 +168,7 @@ class CliTests(unittest.TestCase):
         self.assertEqual(code, 0)
         payload = json.loads(output.getvalue())
         self.assertEqual(payload["status_schema_version"], 1)
-        self.assertEqual(payload["plugin_version"], "0.6.0")
+        self.assertEqual(payload["plugin_version"], "0.6.1")
         self.assertEqual(payload["mode"], "core")
         self.assertEqual(payload["identity_verification"], {"model": False, "role": False})
 

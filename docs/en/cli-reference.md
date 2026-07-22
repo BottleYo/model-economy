@@ -41,7 +41,7 @@ Checks the local installation. `--quiet` suppresses the human-readable report.
 python3 plugins/model-economy/scripts/model_economy.py doctor [--smoke]
 ```
 
-Diagnoses local prerequisites and installation state. `--smoke` attempts a subagent launch. It does not verify role or model identity.
+Checks local prerequisites, managed installation state, and whether `codex --version` responds. Plain `doctor` does not invoke the broader `codex doctor`, inspect authentication, or scan session and database artifacts. `--smoke` explicitly opts into an ephemeral authenticated Codex run that attempts a subagent launch and may consume usage. Neither mode verifies role or model identity.
 
 ## `status`
 

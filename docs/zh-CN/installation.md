@@ -62,7 +62,7 @@ python3 plugins/model-economy/scripts/model_economy.py doctor
 python3 plugins/model-economy/scripts/model_economy.py doctor --smoke
 ```
 
-`doctor --smoke` 检查 Subagent 是否启动，不验证角色或模型身份。
+普通 `doctor` 只检查受管理文件和 `codex --version`，不会调用检查范围更广的 `codex doctor`，也不会检查认证、session 或数据库工件。`doctor --smoke` 会显式启动一次经过认证的临时 Codex 运行，可能产生用量，并检查 Subagent 是否启动；它不验证角色或模型身份。
 
 `verify` 还会检查已安装的受管理角色模板是否与当前插件版本一致。更新插件快照后，需要先运行 `upgrade`，验证才会恢复通过。
 
@@ -96,7 +96,7 @@ python3 plugins/model-economy/scripts/model_economy.py upgrade
 python3 plugins/model-economy/scripts/model_economy.py enable-global-routing
 ```
 
-重新安装插件后，0.6.0 的 Skill 会在新任务中可发现；最后一条命令会幂等刷新受管理全局规则，使原生默认和 strict 交权规则保持最新。`--force` 会覆盖冲突的受管理文件。通常应先处理差异。
+重新安装插件后，当前版本的 Skill 会在新任务中可发现；最后一条命令会幂等刷新受管理全局规则，使原生默认和 strict 交权规则保持最新。`--force` 会覆盖冲突的受管理文件。通常应先处理差异。
 
 ## 导出与导入档案
 

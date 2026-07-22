@@ -41,7 +41,7 @@ python3 plugins/model-economy/scripts/model_economy.py verify [--quiet]
 python3 plugins/model-economy/scripts/model_economy.py doctor [--smoke]
 ```
 
-诊断本地前置条件和安装状态。`--smoke` 会尝试启动 Subagent，但不验证角色或模型身份。
+检查本地前置条件、受管理安装状态以及 `codex --version` 是否响应。普通 `doctor` 不会调用检查范围更广的 `codex doctor`，也不会检查认证、session 或数据库工件。`--smoke` 会显式启动一次经过认证的临时 Codex 运行，尝试启动 Subagent，并可能产生用量。两种模式都不验证角色或模型身份。
 
 ## `status`
 

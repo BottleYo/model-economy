@@ -62,7 +62,7 @@ python3 plugins/model-economy/scripts/model_economy.py doctor
 python3 plugins/model-economy/scripts/model_economy.py doctor --smoke
 ```
 
-`doctor --smoke` checks whether a subagent starts. It does not verify role or model identity.
+Plain `doctor` checks managed files and `codex --version` without invoking the broader `codex doctor` or inspecting authentication, session, or database artifacts. `doctor --smoke` explicitly starts an ephemeral authenticated Codex run, may consume usage, and checks whether a subagent starts. It does not verify role or model identity.
 
 `verify` also checks that installed managed role templates match the current plugin version. After updating the plugin snapshot, run `upgrade` before expecting verification to pass.
 
@@ -96,7 +96,7 @@ python3 plugins/model-economy/scripts/model_economy.py upgrade
 python3 plugins/model-economy/scripts/model_economy.py enable-global-routing
 ```
 
-After reinstalling the plugin, the 0.6.0 skills become discoverable in new tasks. The final command idempotently refreshes the managed global rule so its native default and strict handoff policy stay current. `--force` overwrites a conflicting managed file. Resolve the diff first whenever possible.
+After reinstalling the plugin, the current skills become discoverable in new tasks. The final command idempotently refreshes the managed global rule so its native default and strict handoff policy stay current. `--force` overwrites a conflicting managed file. Resolve the diff first whenever possible.
 
 ## Export and import a profile
 
