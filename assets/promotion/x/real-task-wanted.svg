@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title description">
+  <title id="title">Real coding tasks wanted</title>
+  <desc id="description">An open request for public coding tasks to test Model Economy routing, checks, and limitations.</desc>
+  <rect width="1600" height="900" fill="#141719"/>
+  <g font-family="Arial, Helvetica, sans-serif">
+    <text x="84" y="86" fill="#34C6A4" font-size="20" font-weight="700" letter-spacing="4">MODEL ECONOMY · OPEN TEST 01</text>
+    <path d="M84 118H1516" fill="none" stroke="#647077" stroke-width="2"/>
+    <text x="84" y="322" fill="#F5F7F7" font-size="82" font-weight="700">SEND A REAL CODING TASK.</text>
+    <text x="88" y="390" fill="#C8D0D2" font-size="29">I’ll publish the route, checks, and limitations.</text>
+
+    <g font-size="18" font-weight="700" letter-spacing="2">
+      <rect x="84" y="500" width="294" height="68" rx="3" fill="#1D2326" stroke="#647077" stroke-width="2"/>
+      <text x="116" y="543" fill="#F5F7F7">SMALL EDIT</text>
+      <rect x="404" y="500" width="340" height="68" rx="3" fill="#1D2326" stroke="#647077" stroke-width="2"/>
+      <text x="436" y="543" fill="#F5F7F7">BOUNDED FEATURE</text>
+      <rect x="770" y="500" width="352" height="68" rx="3" fill="#1D2326" stroke="#647077" stroke-width="2"/>
+      <text x="802" y="543" fill="#F5F7F7">MECHANICAL BATCH</text>
+      <rect x="1148" y="500" width="368" height="68" rx="3" fill="#1D2326" stroke="#F6B74D" stroke-width="2"/>
+      <text x="1180" y="543" fill="#F6B74D">HIGH-RISK CHANGE</text>
+    </g>
+
+    <path d="M84 690H1516" fill="none" stroke="#647077" stroke-width="2"/>
+    <text x="84" y="758" fill="#AEB8BC" font-size="19" font-weight="700" letter-spacing="3">PUBLIC REPOS ONLY · NO PRIVATE CODE · NO CREDENTIALS</text>
+    <rect x="1294" y="718" width="222" height="62" rx="2" fill="#F6B74D"/>
+    <text x="1324" y="758" fill="#141719" font-size="19" font-weight="700" letter-spacing="2">REPLY ON X</text>
+  </g>
+</svg>
