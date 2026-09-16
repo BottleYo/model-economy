@@ -11,6 +11,17 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class PublicReleaseTests(unittest.TestCase):
+    def test_reusable_update_prompts_preserve_installation_boundaries(self):
+        for name, heading, terms in (
+            ("README.zh-CN.md", "## 已经装过？", ("最新非预发布 Release", "upgrade --dry-run", "没有增强配置则跳过", "此前启用了全局路由", "--force", "安装快照")),
+            ("README.md", "## Already installed?", ("latest non-prerelease Release", "upgrade --dry-run", "If enhancement is absent", "only if global routing was already enabled", "--force", "installed plugin snapshot")),
+        ):
+            source = (ROOT / name).read_text(encoding="utf-8")
+            prompt = source.split(heading, 1)[1].split("```text", 1)[1].split("```", 1)[0]
+            self.assertNotRegex(prompt, r"v\d+\.\d+\.\d+")
+            for term in terms:
+                self.assertIn(term, prompt)
+
     def test_070_release_discloses_waived_live_trials(self):
         notes = (ROOT / "docs/release/0.7.0.md").read_text(encoding="utf-8")
         self.assertIn("## 简体中文", notes)
@@ -99,8 +110,10 @@ class PublicReleaseTests(unittest.TestCase):
                 resolved = (page.parent / target.split("#", 1)[0]).resolve()
                 if target.endswith("/"):
                     resolved /= "index.html"
-                if target == "./assets/social-preview.png":
-                    resolved = ROOT / "assets/social-preview.png"
+                if target in ("./assets/social-preview.png", "./assets/model-economy-flow-en.svg", "./assets/model-economy-flow-zh-CN.svg"):
+                    resolved = ROOT / target.removeprefix("./")
+                    workflow = (ROOT / ".github/workflows/pages.yml").read_text(encoding="utf-8")
+                    self.assertIn(str(resolved.relative_to(ROOT)).replace("\\", "/"), workflow)
                 self.assertTrue(resolved.exists(), f"broken link in {page}: {target}")
 
     def test_six_xiaohongshu_cards_are_three_by_four_and_self_contained(self):

@@ -1,0 +1,3 @@
+# 自动生成的分工图固定换行，确保各平台逐字节可重复生成。
+assets/model-economy-flow-en.svg text eol=lf
+assets/model-economy-flow-zh-CN.svg text eol=lf

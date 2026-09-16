@@ -2,17 +2,35 @@
 
 # Model Economy
 
-> **v0.7.0 — fine-grained routing and visible-task contracts.** Released as a stable version with maintainer approval to skip live desktop dispatch trials. Automated tests passed; live task creation, continuation, and complex parallel workflows remain unverified. See the [bilingual release notes](docs/release/0.7.0.md) for migration guidance and limitations.
+A division-of-labor guide for Codex. A tiny edit should not need a committee.
 
-> Use strong models for decisions, not routine work.
+Model Economy is a free, open-source Codex plugin. It looks at the job and the risk, then guides model choice, role assignment, and checks. The aim is less unnecessary coordination, with serious attention where a mistake would hurt.
 
-![Model Economy](assets/social-preview.png)
+![Model Economy v0.7.0 task and model routing](assets/model-economy-flow-en.svg)
 
-When one workflow gives a configuration edit, a known bug, and an architecture change the same treatment, every task pays for questions, a specification, a long plan, multiple subagents, and several reviews. That rigor is valuable when the risk justifies it. On routine work, it adds cost and waiting without improving the decision.
+Changing a known setting? Do it in the current task and check it. Repeating a fixed edit across files? A lighter model may fit, if every result can be checked. Changing permissions or architecture? Keep the design and review gates. Less ceremony does not mean fewer useful checks.
 
-Model Economy makes risk classification the first step. The result is not just a model router: it is a bounded development workflow that controls which capability tier may act, what each role may change, when approval is required, and how much orchestration a task can consume.
+v0.7.0 adds rules for visible sidebar tasks. With your authorization and host-tool support, suitable work can run in a separate task with a requested model and reasoning level. A follow-up fix goes back to the same task when possible; a new teammate should not need to read the entire office archive to change one line. The plugin does not add missing host tools or secretly switch the model in your current chat.
 
-It can also display local CodexBar token and estimated-cost summaries. It does not scan sessions itself, promise savings, verify model or role identity, or replace engineering judgment.
+Optional CodexBar integration shows token totals and estimated costs. There is no “install this and save half” promise. Savings need measurements, not a catchy percentage.
+
+The current stable release is **v0.7.0**. Automated checks passed; the maintainer waived live dispatch trials. Live creation, continuation, and complex parallel workflows remain unverified. See the [bilingual release notes](docs/release/0.7.0.md). This is a community project, not an official OpenAI product.
+
+## Already installed? Ask Codex to update it
+
+Paste this into Codex on the computer you want to update. It is not pinned to a version, so you can reuse it next time. First identify the installation; no surprise remodeling of your settings.
+
+```text
+Update this computer's installed Model Economy to the latest stable GitHub release:
+https://github.com/BottleYo/model-economy
+
+First identify the latest non-prerelease Release, installed version, installation source, repository location, and whether six-role enhancement and global routing are enabled. Stop if no stable release can be confirmed; do not substitute main or a prerelease.
+Follow the target version's installation guide and commands supported by this Codex host. Preserve uncommitted work, model mappings, and effective reasoning settings. Updating the repository alone is not a completed plugin update.
+If six-role enhancement exists, run upgrade --dry-run, then upgrade only if there are no conflicts, followed by verify. Retain migration backups. If enhancement is absent, skip it; do not install it as an extra.
+Refresh the managed block with enable-global-routing only if global routing was already enabled. Do not reset settings with install/configure or bypass conflicts with --force.
+Do not read authentication or session files, run doctor --smoke, create test subtasks, or change other plugins. Stop and explain conflicts, unsupported commands, or an unknown source.
+Verify the installed plugin snapshot and optional enhancement separately. Report versions, checks, backup locations, and anything unfinished; remind me to start a new task for the new rules. A source version reported by status does not prove the installed plugin snapshot was updated.
+```
 
 ## Why it exists
 
@@ -52,7 +70,7 @@ This is a workflow choice, not a claim that one tool is universally better. If y
 
 ## How it works
 
-[v0.6.1 stable flow diagram (old budgets, for that version only)](assets/model-economy-flow-en.svg)
+The v0.7.0 diagram above is a routing overview, not a checklist every task must march through.
 
 Tasks are classified in a fixed order: large or high-risk, mechanical, simple, then standard. The first match determines roles, strong role slots, and execution-request limits. See [how it works](docs/en/how-it-works.md) for the complete policy.
 
@@ -73,7 +91,7 @@ The repository CLI can add **enhanced mode**. It installs six local role definit
 
 For large/high-risk work in core mode, Model Economy reports that isolated architecture and final-review roles are unavailable. The user may install enhanced mode or explicitly approve a reduced-assurance single-agent path; that path is never described as the complete Model Economy high-risk workflow. Model and role identity remain unverified in both modes.
 
-### Visible tasks (v0.7.0 in development)
+### Visible tasks (v0.7.0)
 
 Execution preference can be `auto`, `visible-first`, or `current-only`, but preference is not creation authority. New sidebar tasks require an explicit user request or standing work-package creation authorization in user-confirmed, trusted project rules. Stricter current host-tool requirements still take precedence; project rules cannot bypass them. Do not split simple work. Reuse the original task for direct fixes, record model and reasoning separately, and never silently replace rejected choices.
 
