@@ -230,7 +230,7 @@ class UpgradeTests(unittest.TestCase):
         role = self.context.agents_dir / "model-economy-implementer.toml"
         role.chmod(0o640)
         original_mode = stat.S_IMODE(role.stat().st_mode)
-        # Windows 不提供完整 POSIX 权限位；仍验证实际权限被保留并写入备份。
+        # Windows 不提供完整 POSIX 权限位；迁移前后核对实际值，备份按契约记录 null。
         if os.name != "nt":
             self.assertEqual(original_mode, 0o640)
 
@@ -245,7 +245,8 @@ class UpgradeTests(unittest.TestCase):
         manifest = json.loads((result.backup_path / "manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(set(manifest["files"]), {"config.toml", "state.json", *{f"agents/{item.name}.toml" for item in ROLES}})
         self.assertEqual((result.backup_path / "config.toml").read_bytes(), before[Path("model-economy/config.toml")])
-        self.assertEqual(manifest["files"]["agents/model-economy-implementer.toml"]["mode"], original_mode)
+        expected_backup_mode = None if os.name == "nt" else original_mode
+        self.assertEqual(manifest["files"]["agents/model-economy-implementer.toml"]["mode"], expected_backup_mode)
 
     def test_repeated_v1_upgrade_is_zero_write_after_migration(self):
         self.install_v1_fixture()
