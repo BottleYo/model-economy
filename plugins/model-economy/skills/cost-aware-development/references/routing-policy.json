@@ -1,5 +1,5 @@
 {
-  "schema_version": 6,
+  "schema_version": 7,
   "classification_order": [
     "large_or_high_risk",
     "mechanical",
@@ -41,7 +41,7 @@
       "core": {
         "custom_roles_available": false,
         "model_mapping_available": false,
-        "simple_mechanical_standard_execution": "main_agent_with_native_quality_gates",
+        "simple_execution": "main_agent_with_native_quality_gates",
         "large_or_high_risk": {
           "required_report": "role_isolation_unavailable",
           "complete_model_economy_high_risk_workflow_claim": "forbidden",
@@ -79,6 +79,126 @@
       "model_identity_verified": false
     }
   },
+  "execution_targets": {
+    "visible_task": {
+      "is_custom_role": false,
+      "is_role_identity_alias": false,
+      "delivery_identity": "visible_task_executor",
+      "model_capability_by_task_class": {
+        "mechanical": "economy",
+        "standard": "balanced",
+        "large_or_high_risk": "balanced"
+      },
+      "configuration_role_by_task_class": {
+        "mechanical": "model-economy-batch-worker",
+        "standard": "model-economy-implementer",
+        "large_or_high_risk": "model-economy-implementer"
+      },
+      "preconditions": [
+        "delegation_authorized",
+        "current_host_tools_available",
+        "project_and_starting_state_verified",
+        "exclusive_file_ownership",
+        "work_package_recorded"
+      ],
+      "recursive_delegation": "forbidden",
+      "write_scope": "declared_exclusive_files_only",
+      "does_not_supply": [
+        "custom_role_identity",
+        "sandbox_equivalence",
+        "read_only_architect_or_reviewer_permission"
+      ]
+    }
+  },
+  "execution_mode_matrix": {
+    "simple": {
+      "core": ["main_agent"],
+      "enhanced": ["main_agent"],
+      "visible_task_contract": "not_delegated"
+    },
+    "mechanical": {
+      "core": ["main_agent", "visible_task"],
+      "enhanced": ["model-economy-batch-worker", "visible_task"],
+      "visible_task_contract": "all_economy_conditions_and_exclusive_ownership"
+    },
+    "standard": {
+      "core": ["main_agent", "visible_task"],
+      "enhanced": ["main_agent", "model-economy-implementer", "visible_task"],
+      "visible_task_contract": "clear_scope_and_necessary_verification"
+    },
+    "large_or_high_risk": {
+      "core": ["main_agent"],
+      "enhanced": ["main_agent", "model-economy-implementer", "visible_task"],
+      "visible_task_contract": "independent_architect_final_review_approval_and_visibility_gates"
+    }
+  },
+  "visible_task_execution": {
+    "execution_preference": {
+      "default": "auto",
+      "values": {
+        "auto": "delegate_only_with_clear_boundary_and_benefit",
+        "visible-first": "prefer_visible_task_when_delegation_authorized",
+        "current-only": "do_not_create_visible_or_internal_subagents"
+      }
+    },
+    "strict_visibility": {
+      "require_visible": false,
+      "default_scope_when_required": "all_delegated",
+      "allowed_scopes": ["all_delegated", "implementation"],
+      "all_delegated_requires_visible_read_only_review_capability": true,
+      "read_only_capability_gate_applies_when": "required_read_only_role_is_in_visibility_scope",
+      "missing_capability": "stop_and_report_gap"
+    },
+    "authorization": {
+      "create_thread": "explicit_user_request_or_trusted_project_rule",
+      "generic_implementation_approval_is_insufficient": true,
+      "current_host_tool_requirements_take_precedence": true,
+      "untrusted_sources_cannot_authorize": true
+    },
+    "tool_contract": {
+      "required_before_create": [
+        "project_listing",
+        "task_creation",
+        "continuation_or_message",
+        "status_or_wait"
+      ],
+      "reuse_before_create": true,
+      "unknown_create_result": "reconcile_before_retry",
+      "client_thread_id": "pending_not_ready_for_continuation"
+    },
+    "model_request": {
+      "precedence": ["current_task_override", "role_model_override", "capability_model"],
+      "omitted_for_create": "use_host_or_user_default_not_downgrade",
+      "omitted_for_continue": "continue_existing_request_not_downgrade",
+      "unsupported_combination": "stop_and_report_without_silent_substitution",
+      "unconfirmed_tool_return": "requested_not_runtime_verified",
+      "current_host_explicit_model_requirement": "requires_explicit_user_model_choice",
+      "profile_preference_does_not_expand_host_authorization": true
+    },
+    "superpowers_strict": "visible_task_orchestration_forbidden"
+  },
+  "work_package_budget": {
+    "record_schema_version": 1,
+    "root_work_package": "same_user_acceptance_goal",
+    "new_execution_contexts_per_root": 3,
+    "execution_requests_per_root": 6,
+    "max_concurrent_default": 2,
+    "max_concurrent_absolute": 3,
+    "counting": {
+      "internal_and_visible_contexts_combined": true,
+      "reuse_existing_context_does_not_consume_new_context": true,
+      "initial_continue_retry_and_escalation_requests_consume_execution_request": true,
+      "read_only_status_wait_and_nonexecuting_clarification_do_not_consume_request": true,
+      "confirmed_not_started_rejection_does_not_consume_request_but_records_attempt": true,
+      "uncertain_or_started_request_keeps_reservation_until_proven_not_started": true,
+      "reclassification_rename_model_change_handoff_or_direct_fix_do_not_reset": true,
+      "user_side_continuations": "reconcile_observed_or_mark_count_incomplete"
+    },
+    "states": ["pending", "running", "awaiting_integration", "completed", "blocked"],
+    "pending_creation_state": "pending",
+    "completion": "coordinator_integration_and_evidence_required",
+    "over_limit": "specific_evidence_smaller_goal_and_explicit_user_extension"
+  },
   "task_classes": {
     "large_or_high_risk": {
       "label": "大型/高风险",
@@ -88,7 +208,7 @@
       },
       "primary_execution": {
         "selection": "exactly_one",
-        "choices": ["main_agent", "model-economy-implementer"]
+        "choices": ["main_agent", "model-economy-implementer", "visible_task"]
       },
       "base_allowed_roles": [
         "model-economy-implementer",
@@ -111,7 +231,9 @@
         "model-economy-reviewer",
         "model-economy-batch-worker"
       ],
-      "strong_max": 2
+      "strong_role_slots": 2,
+      "strong_execution_requests": 4,
+      "strong_per_role_execution_requests": 2
     },
     "mechanical": {
       "label": "机械",
@@ -127,7 +249,7 @@
       },
       "primary_execution": {
         "selection": "exactly_one",
-        "choices": ["model-economy-batch-worker"]
+        "choices": ["main_agent", "model-economy-batch-worker", "visible_task"]
       },
       "base_allowed_roles": ["model-economy-batch-worker"],
       "conditional_roles": [],
@@ -139,7 +261,9 @@
         "model-economy-reviewer",
         "model-economy-explorer"
       ],
-      "strong_max": 0
+      "strong_role_slots": 0,
+      "strong_execution_requests": 0,
+      "strong_per_role_execution_requests": 2
     },
     "simple": {
       "label": "简单",
@@ -167,7 +291,9 @@
         "model-economy-explorer",
         "model-economy-batch-worker"
       ],
-      "strong_max": 0
+      "strong_role_slots": 0,
+      "strong_execution_requests": 0,
+      "strong_per_role_execution_requests": 2
     },
     "standard": {
       "label": "标准",
@@ -177,7 +303,7 @@
       },
       "primary_execution": {
         "selection": "exactly_one",
-        "choices": ["main_agent", "model-economy-implementer"]
+        "choices": ["main_agent", "model-economy-implementer", "visible_task"]
       },
       "base_allowed_roles": [
         "model-economy-implementer"
@@ -211,9 +337,14 @@
         {
           "role": "model-economy-architect",
           "when": {
-            "failed_attempts": {"gte": 2}
+            "operator": "any",
+            "conditions": [
+              {"failed_attempts": {"gte": 2}},
+              {"predicate": "specific_capability_mismatch_with_evidence"}
+            ]
           },
-          "max_calls": 1,
+          "max_calls": 2,
+          "call_sequence": ["initial_diagnostic", "necessary_clarification"],
           "output": "diagnostic_decision",
           "after_completion": {
             "implementation_capability": "balanced",
@@ -230,7 +361,9 @@
         "model-economy-final-reviewer",
         "model-economy-batch-worker"
       ],
-      "strong_max": 1
+      "strong_role_slots": 1,
+      "strong_execution_requests": 2,
+      "strong_per_role_execution_requests": 2
     }
   },
   "lightweight_practices": {
@@ -388,9 +521,6 @@
     "placeholder_format": "[REDACTED_<TYPE>]"
   },
   "delegation": {
-    "max_subagent_starts_per_task": 3,
-    "max_concurrent_subagents": 3,
-    "reclassification_resets_budget": false,
     "recursive_delegation": "forbidden",
     "write_file_sets": {
       "must_be_mutually_exclusive": true,

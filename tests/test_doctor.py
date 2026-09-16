@@ -19,6 +19,8 @@ from model_economy_lib.doctor import (  # noqa: E402
     run_smoke,
     verify_installation,
 )
+from model_economy_lib.config import MachineState, dump_state, load_state  # noqa: E402
+from model_economy_lib.filesystem import sha256_bytes  # noqa: E402
 from model_economy_lib.lifecycle import Context, install  # noqa: E402
 from model_economy_lib.models import Profile  # noqa: E402
 from model_economy_lib.profiles import load_profile  # noqa: E402
@@ -127,6 +129,31 @@ class DoctorTests(unittest.TestCase):
         with patch("model_economy_lib.doctor.find_codex", return_value=None):
             report = run_doctor(self.context)
         self.assertFalse(report.checks["model_mapping"])
+
+    def test_verification_detects_reasoning_drift_even_when_state_hashes_are_updated(self):
+        role = self.home / "agents" / "model-economy-explorer.toml"
+        role.write_text(
+            role.read_text(encoding="utf-8").replace(
+                'model_reasoning_effort = "low"', 'model_reasoning_effort = "medium"'
+            ),
+            encoding="utf-8",
+        )
+        state = load_state(self.context.state_path)
+        managed = dict(state.managed_files)
+        managed[role.name] = sha256_bytes(role.read_bytes())
+        self.context.state_path.write_text(
+            dump_state(MachineState(
+                schema_version=1,
+                config_sha256=state.config_sha256,
+                template_version=state.template_version,
+                managed_files=managed,
+                model_identity_verified=state.model_identity_verified,
+            )),
+            encoding="utf-8",
+        )
+        report = verify_installation(self.context)
+        self.assertTrue(report.checks["role_hashes"])
+        self.assertFalse(report.checks["reasoning"])
 
     def test_doctor_reports_a_codex_timeout_as_failure(self):
         with patch("model_economy_lib.doctor.find_codex", return_value="codex"), patch(

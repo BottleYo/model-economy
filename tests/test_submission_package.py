@@ -43,6 +43,8 @@ class SubmissionPackageTests(unittest.TestCase):
             for required in (
                 "model-economy/skills/cost-aware-development/SKILL.md",
                 "model-economy/skills/cost-aware-development/references/routing-policy.json",
+                "model-economy/skills/cost-aware-development/references/visible-tasks.md",
+                "model-economy/skills/cost-aware-development/assets/work-package-template.md",
                 "model-economy/skills/domain-context/SKILL.md",
                 "model-economy/skills/module-design/SKILL.md",
                 "model-economy/skills/disposable-prototype/SKILL.md",

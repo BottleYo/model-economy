@@ -14,7 +14,9 @@ SCRIPTS = ROOT / "plugins" / "model-economy" / "scripts"
 sys.path.insert(0, str(SCRIPTS))
 
 from model_economy_lib.cli import main  # noqa: E402
+from model_economy_lib.config import MachineState, dump_state, load_state  # noqa: E402
 from model_economy_lib.doctor import DoctorReport, SmokeReport  # noqa: E402
+from model_economy_lib.filesystem import sha256_bytes  # noqa: E402
 from model_economy_lib.global_routing import END_MARKER, START_MARKER  # noqa: E402
 from model_economy_lib.models import ROLES  # noqa: E402
 from model_economy_lib.usage import (  # noqa: E402
@@ -106,6 +108,29 @@ class CliTests(unittest.TestCase):
         rendered = (self.home / "agents" / "model-economy-explorer.toml").read_text(encoding="utf-8")
         self.assertIn('model = "economy-model"', rendered)
 
+    def test_install_applies_role_model_and_reasoning_overrides(self):
+        code = main(
+            [
+                "--codex-home", str(self.home), "install", "--profile", "openai-56",
+                "--role-model", "model-economy-implementer=implementation-model",
+                "--reasoning", "model-economy-implementer=low",
+            ]
+        )
+        self.assertEqual(code, 0)
+        rendered = (self.home / "agents" / "model-economy-implementer.toml").read_text(encoding="utf-8")
+        self.assertIn('model = "implementation-model"', rendered)
+        self.assertIn('model_reasoning_effort = "low"', rendered)
+
+    def test_role_override_rejects_duplicate_role_keys(self):
+        code = main(
+            [
+                "--codex-home", str(self.home), "install", "--profile", "openai-56",
+                "--reasoning", "model-economy-implementer=low",
+                "--reasoning", "model-economy-implementer=medium",
+            ]
+        )
+        self.assertEqual(code, 64)
+
     def test_export_and_import_profile_use_explicit_paths(self):
         self.assertEqual(
             main(["--codex-home", str(self.home), "install", "--profile", "openai-56"]),
@@ -142,6 +167,45 @@ class CliTests(unittest.TestCase):
         self.assertEqual(before, {path: path.read_bytes() for path in managed_paths})
         self.assertIn("完成：", output.getvalue())
 
+    def test_v1_upgrade_preview_and_backup_path_are_reported(self):
+        self.assertEqual(main(["--codex-home", str(self.home), "install", "--profile", "openai-56"]), 0)
+        config = (
+            'schema_version = 1\nprofile = "openai-56"\n[models]\n'
+            'strong = "gpt-5.6-sol"\nbalanced = "gpt-5.6-terra"\neconomy = "gpt-5.6-luna"\n'
+        ).encode("utf-8")
+        config_path = self.home / "model-economy" / "config.toml"
+        config_path.write_bytes(config)
+        for name, old, new in (
+            ("model-economy-implementer.toml", 'model_reasoning_effort = "medium"', 'model_reasoning_effort = "high"'),
+            ("model-economy-explorer.toml", 'model_reasoning_effort = "low"', 'model_reasoning_effort = "medium"'),
+        ):
+            path = self.home / "agents" / name
+            path.write_text(path.read_text(encoding="utf-8").replace(old, new), encoding="utf-8")
+        state_path = self.home / "model-economy" / "state.json"
+        state = load_state(state_path)
+        state_path.write_text(dump_state(MachineState(
+            schema_version=1,
+            config_sha256=sha256_bytes(config),
+            template_version=state.template_version,
+            managed_files={path.name: sha256_bytes(path.read_bytes()) for path in (self.home / "agents").glob("model-economy-*.toml")},
+            model_identity_verified=state.model_identity_verified,
+        )), encoding="utf-8")
+
+        dry_output = StringIO()
+        with redirect_stdout(dry_output):
+            self.assertEqual(main(["--codex-home", str(self.home), "upgrade", "--dry-run"]), 0)
+        self.assertIn("升级预览：schema v1 → v2", dry_output.getvalue())
+        self.assertIn("模型映射：保留 explicit", dry_output.getvalue())
+        self.assertIn("角色模型覆盖：保留 0 项", dry_output.getvalue())
+        self.assertIn("model-economy-implementer high → high", dry_output.getvalue())
+        self.assertIn("迁移备份：不会创建（dry-run）", dry_output.getvalue())
+
+        upgrade_output = StringIO()
+        with redirect_stdout(upgrade_output):
+            self.assertEqual(main(["--codex-home", str(self.home), "upgrade"]), 0)
+        self.assertIn("迁移备份：", upgrade_output.getvalue())
+        self.assertNotIn("不会创建", upgrade_output.getvalue())
+
     def test_upgrade_dry_run_reports_conflict_for_missing_installation(self):
         code = main(["--codex-home", str(self.home), "upgrade", "--dry-run"])
         self.assertEqual(code, 2)
@@ -168,7 +232,7 @@ class CliTests(unittest.TestCase):
         self.assertEqual(code, 0)
         payload = json.loads(output.getvalue())
         self.assertEqual(payload["status_schema_version"], 1)
-        self.assertEqual(payload["plugin_version"], "0.6.1")
+        self.assertEqual(payload["plugin_version"], "0.7.0")
         self.assertEqual(payload["mode"], "core")
         self.assertEqual(payload["identity_verification"], {"model": False, "role": False})
 

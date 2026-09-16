@@ -11,6 +11,8 @@ ROLE_MATRIX = SKILL_DIR / "references/role-matrix.md"
 ROUTING_EXAMPLES = SKILL_DIR / "references/routing-examples.md"
 CONTEXT_CONTRACT = SKILL_DIR / "references/context-contract.md"
 QUALITY_GATES = SKILL_DIR / "references/quality-gates.md"
+VISIBLE_TASKS = SKILL_DIR / "references/visible-tasks.md"
+WORK_PACKAGE_TEMPLATE = SKILL_DIR / "assets/work-package-template.md"
 SKILLS_ROOT = ROOT / "plugins/model-economy/skills"
 LEAF_SKILLS = {
     "domain-context": SKILLS_ROOT / "domain-context/SKILL.md",
@@ -75,11 +77,30 @@ def classify(policy, facts):
     raise AssertionError("classification produced no result")
 
 
+def allowed_primary_targets(policy, mode, task_class):
+    return policy["execution_mode_matrix"][task_class][mode]
+
+
+def can_reserve_execution_request(policy, already_reserved):
+    return already_reserved < policy["work_package_budget"]["execution_requests_per_root"]
+
+
+def consumes_execution_request(policy, execution_state):
+    counting = policy["work_package_budget"]["counting"]
+    if execution_state == "confirmed_not_started":
+        return not counting[
+            "confirmed_not_started_rejection_does_not_consume_request_but_records_attempt"
+        ]
+    if execution_state in {"unknown", "started_or_failed_after_start"}:
+        return counting["uncertain_or_started_request_keeps_reservation_until_proven_not_started"]
+    raise AssertionError(f"unknown execution state: {execution_state}")
+
+
 class SkillContractTests(unittest.TestCase):
     def test_policy_has_ordered_first_match_classification_and_default_fallback(self):
         policy = load_policy()
 
-        self.assertEqual(policy["schema_version"], 6)
+        self.assertEqual(policy["schema_version"], 7)
         self.assertEqual(
             policy["classification_order"],
             ["large_or_high_risk", "mechanical", "simple", "standard"],
@@ -97,7 +118,9 @@ class SkillContractTests(unittest.TestCase):
                     "conditional_roles",
                     "required_roles",
                     "forbidden_roles",
-                    "strong_max",
+                    "strong_role_slots",
+                    "strong_execution_requests",
+                    "strong_per_role_execution_requests",
                 },
             )
 
@@ -113,7 +136,7 @@ class SkillContractTests(unittest.TestCase):
         self.assertEqual(set(modes["modes"]), {"core", "enhanced", "degraded"})
         self.assertFalse(modes["modes"]["core"]["custom_roles_available"])
         self.assertEqual(
-            modes["modes"]["core"]["simple_mechanical_standard_execution"],
+            modes["modes"]["core"]["simple_execution"],
             "main_agent_with_native_quality_gates",
         )
         high_risk = modes["modes"]["core"]["large_or_high_risk"]
@@ -184,7 +207,7 @@ class SkillContractTests(unittest.TestCase):
         incomplete_simple = {**simple_facts, "no_open_judgment": False}
         self.assertEqual(classify(policy, incomplete_simple), "standard")
 
-    def test_each_class_partitions_all_six_roles_and_declares_strong_max(self):
+    def test_each_class_partitions_all_six_roles_and_declares_strong_budgets(self):
         policy = load_policy()
         all_roles = set(policy["roles"])
         expected = {
@@ -199,21 +222,24 @@ class SkillContractTests(unittest.TestCase):
                     "model-economy-reviewer",
                     "model-economy-batch-worker",
                 },
-                "strong_max": 2,
+                "strong_role_slots": 2,
+                "strong_execution_requests": 4,
             },
             "mechanical": {
                 "base": {"model-economy-batch-worker"},
                 "conditional": set(),
                 "required": set(),
                 "forbidden": all_roles - {"model-economy-batch-worker"},
-                "strong_max": 0,
+                "strong_role_slots": 0,
+                "strong_execution_requests": 0,
             },
             "simple": {
                 "base": set(),
                 "conditional": set(),
                 "required": set(),
                 "forbidden": all_roles,
-                "strong_max": 0,
+                "strong_role_slots": 0,
+                "strong_execution_requests": 0,
             },
             "standard": {
                 "base": {"model-economy-implementer"},
@@ -227,7 +253,8 @@ class SkillContractTests(unittest.TestCase):
                     "model-economy-final-reviewer",
                     "model-economy-batch-worker",
                 },
-                "strong_max": 1,
+                "strong_role_slots": 1,
+                "strong_execution_requests": 2,
             },
         }
 
@@ -237,9 +264,11 @@ class SkillContractTests(unittest.TestCase):
                 "conditional": role_names(class_policy["conditional_roles"]),
                 "required": role_names(class_policy["required_roles"]),
                 "forbidden": set(class_policy["forbidden_roles"]),
-                "strong_max": class_policy["strong_max"],
+                "strong_role_slots": class_policy["strong_role_slots"],
+                "strong_execution_requests": class_policy["strong_execution_requests"],
             }
             self.assertEqual(actual, expected[class_id])
+            self.assertEqual(class_policy["strong_per_role_execution_requests"], 2)
             groups = [
                 actual["base"],
                 actual["conditional"],
@@ -249,7 +278,7 @@ class SkillContractTests(unittest.TestCase):
             self.assertEqual(set().union(*groups), all_roles)
             self.assertEqual(sum(map(len, groups)), len(all_roles))
 
-    def test_standard_architect_is_conditional_after_two_failures(self):
+    def test_standard_architect_is_conditional_and_has_a_bounded_clarification(self):
         standard = load_policy()["task_classes"]["standard"]
 
         self.assertNotIn("model-economy-architect", standard["base_allowed_roles"])
@@ -258,8 +287,21 @@ class SkillContractTests(unittest.TestCase):
             for entry in standard["conditional_roles"]
             if entry["role"] == "model-economy-architect"
         )
-        self.assertEqual(architect["when"], {"failed_attempts": {"gte": 2}})
-        self.assertEqual(architect["max_calls"], 1)
+        self.assertEqual(
+            architect["when"],
+            {
+                "operator": "any",
+                "conditions": [
+                    {"failed_attempts": {"gte": 2}},
+                    {"predicate": "specific_capability_mismatch_with_evidence"},
+                ],
+            },
+        )
+        self.assertEqual(architect["max_calls"], 2)
+        self.assertEqual(
+            architect["call_sequence"],
+            ["initial_diagnostic", "necessary_clarification"],
+        )
         self.assertEqual(architect["output"], "diagnostic_decision")
         self.assertEqual(
             architect["after_completion"],
@@ -308,21 +350,205 @@ class SkillContractTests(unittest.TestCase):
             classes["standard"]["primary_execution"],
             {
                 "selection": "exactly_one",
-                "choices": ["main_agent", "model-economy-implementer"],
+                "choices": [
+                    "main_agent",
+                    "model-economy-implementer",
+                    "visible_task",
+                ],
             },
         )
         self.assertEqual(
             classes["large_or_high_risk"]["primary_execution"],
             {
                 "selection": "exactly_one",
-                "choices": ["main_agent", "model-economy-implementer"],
+                "choices": [
+                    "main_agent",
+                    "model-economy-implementer",
+                    "visible_task",
+                ],
             },
         )
         self.assertEqual(classes["simple"]["primary_execution"]["choices"], ["main_agent"])
         self.assertEqual(
             classes["mechanical"]["primary_execution"]["choices"],
-            ["model-economy-batch-worker"],
+            ["main_agent", "model-economy-batch-worker", "visible_task"],
         )
+
+    def test_visible_task_is_a_generic_execution_target_not_a_seventh_role(self):
+        policy = load_policy()
+        target = policy["execution_targets"]["visible_task"]
+
+        self.assertNotIn("visible_task", policy["roles"])
+        self.assertFalse(target["is_custom_role"])
+        self.assertFalse(target["is_role_identity_alias"])
+        self.assertEqual(target["delivery_identity"], "visible_task_executor")
+        self.assertEqual(
+            target["model_capability_by_task_class"],
+            {
+                "mechanical": "economy",
+                "standard": "balanced",
+                "large_or_high_risk": "balanced",
+            },
+        )
+        self.assertEqual(
+            target["configuration_role_by_task_class"],
+            {
+                "mechanical": "model-economy-batch-worker",
+                "standard": "model-economy-implementer",
+                "large_or_high_risk": "model-economy-implementer",
+            },
+        )
+        self.assertEqual(
+            target["preconditions"],
+            [
+                "delegation_authorized",
+                "current_host_tools_available",
+                "project_and_starting_state_verified",
+                "exclusive_file_ownership",
+                "work_package_recorded",
+            ],
+        )
+        self.assertEqual(target["recursive_delegation"], "forbidden")
+
+    def test_mode_execution_matrix_distinguishes_core_enhanced_and_visible_limits(self):
+        matrix = load_policy()["execution_mode_matrix"]
+
+        self.assertEqual(set(matrix), {"simple", "mechanical", "standard", "large_or_high_risk"})
+        self.assertEqual(
+            matrix["simple"],
+            {
+                "core": ["main_agent"],
+                "enhanced": ["main_agent"],
+                "visible_task_contract": "not_delegated",
+            },
+        )
+        self.assertEqual(
+            matrix["mechanical"],
+            {
+                "core": ["main_agent", "visible_task"],
+                "enhanced": ["model-economy-batch-worker", "visible_task"],
+                "visible_task_contract": "all_economy_conditions_and_exclusive_ownership",
+            },
+        )
+        self.assertEqual(
+            matrix["standard"],
+            {
+                "core": ["main_agent", "visible_task"],
+                "enhanced": [
+                    "main_agent",
+                    "model-economy-implementer",
+                    "visible_task",
+                ],
+                "visible_task_contract": "clear_scope_and_necessary_verification",
+            },
+        )
+        self.assertEqual(
+            matrix["large_or_high_risk"]["core"], ["main_agent"])
+        self.assertEqual(
+            matrix["large_or_high_risk"]["enhanced"],
+            ["main_agent", "model-economy-implementer", "visible_task"],
+        )
+        self.assertEqual(
+            matrix["large_or_high_risk"]["visible_task_contract"],
+            "independent_architect_final_review_approval_and_visibility_gates",
+        )
+
+    def test_mode_matrix_rejects_visible_bypasses_for_simple_and_core_high_risk_work(self):
+        policy = load_policy()
+
+        self.assertNotIn("visible_task", allowed_primary_targets(policy, "core", "simple"))
+        self.assertNotIn(
+            "visible_task", allowed_primary_targets(policy, "core", "large_or_high_risk")
+        )
+        self.assertIn(
+            "visible_task", allowed_primary_targets(policy, "enhanced", "large_or_high_risk")
+        )
+
+    def test_visible_execution_requires_current_tool_authorization_and_safe_request_semantics(self):
+        policy = load_policy()
+        visible = policy["visible_task_execution"]
+
+        self.assertEqual(
+            visible["execution_preference"],
+            {
+                "default": "auto",
+                "values": {
+                    "auto": "delegate_only_with_clear_boundary_and_benefit",
+                    "visible-first": "prefer_visible_task_when_delegation_authorized",
+                    "current-only": "do_not_create_visible_or_internal_subagents",
+                },
+            },
+        )
+        self.assertEqual(
+            visible["strict_visibility"],
+            {
+                "require_visible": False,
+                "default_scope_when_required": "all_delegated",
+                "allowed_scopes": ["all_delegated", "implementation"],
+                "all_delegated_requires_visible_read_only_review_capability": True,
+                "read_only_capability_gate_applies_when": "required_read_only_role_is_in_visibility_scope",
+                "missing_capability": "stop_and_report_gap",
+            },
+        )
+        authorization = visible["authorization"]
+        self.assertEqual(authorization["create_thread"], "explicit_user_request_or_trusted_project_rule")
+        self.assertTrue(authorization["generic_implementation_approval_is_insufficient"])
+        self.assertTrue(authorization["current_host_tool_requirements_take_precedence"])
+        self.assertEqual(authorization["untrusted_sources_cannot_authorize"], True)
+        self.assertEqual(
+            visible["model_request"],
+            {
+                "precedence": ["current_task_override", "role_model_override", "capability_model"],
+                "omitted_for_create": "use_host_or_user_default_not_downgrade",
+                "omitted_for_continue": "continue_existing_request_not_downgrade",
+                "unsupported_combination": "stop_and_report_without_silent_substitution",
+                "unconfirmed_tool_return": "requested_not_runtime_verified",
+                "current_host_explicit_model_requirement": "requires_explicit_user_model_choice",
+                "profile_preference_does_not_expand_host_authorization": True,
+            },
+        )
+
+    def test_work_package_budget_keeps_visible_and_internal_execution_in_one_root_ledger(self):
+        policy = load_policy()
+        budget = policy["work_package_budget"]
+
+        self.assertEqual(budget["record_schema_version"], 1)
+        self.assertEqual(budget["root_work_package"], "same_user_acceptance_goal")
+        self.assertEqual(budget["new_execution_contexts_per_root"], 3)
+        self.assertEqual(budget["execution_requests_per_root"], 6)
+        self.assertEqual(budget["max_concurrent_default"], 2)
+        self.assertEqual(budget["max_concurrent_absolute"], 3)
+        self.assertEqual(budget["counting"], {
+            "internal_and_visible_contexts_combined": True,
+            "reuse_existing_context_does_not_consume_new_context": True,
+            "initial_continue_retry_and_escalation_requests_consume_execution_request": True,
+            "read_only_status_wait_and_nonexecuting_clarification_do_not_consume_request": True,
+            "confirmed_not_started_rejection_does_not_consume_request_but_records_attempt": True,
+            "uncertain_or_started_request_keeps_reservation_until_proven_not_started": True,
+            "reclassification_rename_model_change_handoff_or_direct_fix_do_not_reset": True,
+            "user_side_continuations": "reconcile_observed_or_mark_count_incomplete",
+        })
+        self.assertEqual(
+            budget["states"],
+            ["pending", "running", "awaiting_integration", "completed", "blocked"],
+        )
+        self.assertEqual(budget["pending_creation_state"], "pending")
+        self.assertEqual(budget["completion"], "coordinator_integration_and_evidence_required")
+        self.assertEqual(budget["over_limit"], "specific_evidence_smaller_goal_and_explicit_user_extension")
+
+    def test_work_package_budget_rejects_a_seventh_execution_request_without_expansion(self):
+        policy = load_policy()
+
+        self.assertTrue(can_reserve_execution_request(policy, 0))
+        self.assertTrue(can_reserve_execution_request(policy, 5))
+        self.assertFalse(can_reserve_execution_request(policy, 6))
+
+    def test_work_package_releases_only_confirmed_not_started_rejections(self):
+        policy = load_policy()
+
+        self.assertFalse(consumes_execution_request(policy, "confirmed_not_started"))
+        self.assertTrue(consumes_execution_request(policy, "unknown"))
+        self.assertTrue(consumes_execution_request(policy, "started_or_failed_after_start"))
 
     def test_large_required_roles_are_completion_gates(self):
         large = load_policy()["task_classes"]["large_or_high_risk"]
@@ -342,7 +568,8 @@ class SkillContractTests(unittest.TestCase):
                 },
             ],
         )
-        self.assertEqual(large["strong_max"], 2)
+        self.assertEqual(large["strong_role_slots"], 2)
+        self.assertEqual(large["strong_execution_requests"], 4)
 
     def test_approval_gate_blocks_ambiguous_or_high_risk_work_without_evidence(self):
         gate = load_policy()["approval_gate"]
@@ -515,7 +742,10 @@ class SkillContractTests(unittest.TestCase):
             },
         )
         self.assertEqual(sanitization["placeholder_format"], "[REDACTED_<TYPE>]")
-        self.assertIn("## 脱敏规则", CONTEXT_CONTRACT.read_text(encoding="utf-8"))
+        context = CONTEXT_CONTRACT.read_text(encoding="utf-8")
+        self.assertIn("## 脱敏规则", context)
+        self.assertIn("可见任务", context)
+        self.assertIn("工作包", context)
 
     def test_delegated_write_sets_are_mutually_exclusive_or_serialized_by_the_main_agent(self):
         write_sets = load_policy()["delegation"]["write_file_sets"]
@@ -523,13 +753,12 @@ class SkillContractTests(unittest.TestCase):
         self.assertTrue(write_sets["must_be_mutually_exclusive"])
         self.assertEqual(write_sets["overlap_handling"], "main_agent_serializes")
 
-    def test_subagent_budget_counts_total_starts_and_survives_reclassification(self):
+    def test_delegation_keeps_only_shared_safety_constraints_outside_work_package_ledger(self):
         delegation = load_policy()["delegation"]
 
-        self.assertEqual(delegation["max_subagent_starts_per_task"], 3)
-        self.assertEqual(delegation["max_concurrent_subagents"], 3)
-        self.assertFalse(delegation["reclassification_resets_budget"])
         self.assertEqual(delegation["recursive_delegation"], "forbidden")
+        self.assertNotIn("max_subagent_starts_per_task", delegation)
+        self.assertNotIn("max_concurrent_subagents", delegation)
 
     def test_skill_defines_single_orchestration_authority_and_evidence_layers(self):
         skill = SKILL.read_text(encoding="utf-8")
@@ -538,7 +767,7 @@ class SkillContractTests(unittest.TestCase):
         self.assertIn("按指令优先级只选择一套代理编排", skill)
         self.assertIn("subagent-driven-development", skill)
         self.assertIn("不得增加所选路由之外", skill)
-        self.assertIn("主 agent 或一个 `model-economy-implementer`", skill)
+        self.assertIn("主 agent、`model-economy-implementer` 或获授权的 `visible_task`", skill)
         self.assertIn("变更评估", skill)
         self.assertIn("残余交付风险", skill)
         self.assertIn("新鲜验证证据", skill)
@@ -588,8 +817,10 @@ class SkillContractTests(unittest.TestCase):
             roles_from_matrix,
             {name: role["capability"] for name, role in policy["roles"].items()},
         )
+        matrix = ROLE_MATRIX.read_text(encoding="utf-8")
+        self.assertIn("两次实质失败或有证据的具体能力不匹配", matrix)
 
-    def test_every_routing_example_matches_all_policy_role_sets_and_strong_max(self):
+    def test_every_routing_example_matches_policy_role_sets_mode_matrix_and_strong_budgets(self):
         policy = load_policy()
         rows = parse_markdown_table(
             ROUTING_EXAMPLES,
@@ -600,7 +831,8 @@ class SkillContractTests(unittest.TestCase):
                 "条件角色",
                 "必需角色",
                 "禁止角色",
-                "`strong` 上限",
+                "strong 职责席位",
+                "strong 执行请求",
             ),
         )
         expected_scenarios = {
@@ -632,9 +864,31 @@ class SkillContractTests(unittest.TestCase):
                 parse_role_set(row["禁止角色"]),
                 set(class_policy["forbidden_roles"]),
             )
-            self.assertEqual(int(row["`strong` 上限"]), class_policy["strong_max"])
+            self.assertEqual(int(row["strong 职责席位"]), class_policy["strong_role_slots"])
+            self.assertEqual(
+                int(row["strong 执行请求"]), class_policy["strong_execution_requests"]
+            )
 
         self.assertIn("references/routing-policy.json", SKILL.read_text(encoding="utf-8"))
+
+    def test_visible_task_reference_and_work_package_template_are_on_demand_not_second_policy_sources(self):
+        skill = SKILL.read_text(encoding="utf-8")
+        visible = VISIBLE_TASKS.read_text(encoding="utf-8")
+        template = WORK_PACKAGE_TEMPLATE.read_text(encoding="utf-8")
+
+        self.assertIn("references/visible-tasks.md", skill)
+        self.assertIn("低上下文", skill)
+        self.assertIn("routing-policy.json", visible)
+        self.assertIn("../assets/work-package-template.md", visible)
+        self.assertIn("不是第二事实源", visible)
+        self.assertIn("显式创建授权", visible)
+        self.assertIn("不静默换模型", visible)
+        self.assertIn("root_work_package_id", template)
+        self.assertIn("awaiting_integration", template)
+        self.assertIn("实际返回/未知", template)
+        self.assertIn("请求标识", template)
+        self.assertIn("计数完整性", template)
+        self.assertIn("不写入安装 state", template)
 
 
 if __name__ == "__main__":

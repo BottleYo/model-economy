@@ -11,11 +11,19 @@ PROFILES = ROOT / "plugins" / "model-economy" / "assets" / "profiles"
 sys.path.insert(0, str(SCRIPTS))
 
 from model_economy_lib.profiles import load_profile
-from model_economy_lib.models import Profile, ROLES
+from model_economy_lib.config import default_reasoning
+from model_economy_lib.models import DEFAULT_REASONING, Profile, ROLES
 from model_economy_lib.renderer import render_agent, render_all_agents
 
 
 class RendererTests(unittest.TestCase):
+    def test_v2_default_reasoning_has_one_source_and_matches_all_roles(self):
+        self.assertEqual(default_reasoning(), DEFAULT_REASONING)
+        self.assertEqual(
+            {role.name: role.reasoning_effort for role in ROLES},
+            DEFAULT_REASONING,
+        )
+
     def test_openai_profile_maps_three_capabilities(self):
         profile = load_profile(PROFILES / "openai-56.toml")
         self.assertEqual(profile.models["strong"], "gpt-5.6-sol")
@@ -76,10 +84,10 @@ class RendererTests(unittest.TestCase):
                         if profile_name == "inherited.toml":
                             self.assertNotIn("model", document)
 
-    def test_special_model_strings_round_trip_without_placeholders(self):
+    def test_special_printable_model_strings_round_trip_without_placeholders(self):
         special_models = {
-            "strong": 'model "strong" \\ path\nnext',
-            "balanced": "balanced\tvalue",
+            "strong": 'model "strong" \\ path',
+            "balanced": "balanced value",
             "economy": "经济模型",
         }
         profile = Profile(name="special", inherit_model=False, models=special_models)
@@ -91,6 +99,25 @@ class RendererTests(unittest.TestCase):
                 )])
                 self.assertNotIn("{{", contents)
                 self.assertNotIn("}}", contents)
+
+    def test_role_model_override_and_reasoning_override_win_independently(self):
+        profile = Profile(
+            name="custom",
+            inherit_model=False,
+            models={"strong": "strong", "balanced": "balanced", "economy": "economy"},
+            role_models={"model-economy-implementer": "implementation"},
+            reasoning={
+                "model-economy-architect": "high",
+                "model-economy-final-reviewer": "high",
+                "model-economy-implementer": "medium",
+                "model-economy-reviewer": "medium",
+                "model-economy-explorer": "low",
+                "model-economy-batch-worker": "low",
+            },
+        )
+        rendered = tomllib.loads(render_all_agents(profile)["model-economy-implementer.toml"])
+        self.assertEqual(rendered["model"], "implementation")
+        self.assertEqual(rendered["model_reasoning_effort"], "medium")
 
     def test_profile_rejects_invalid_model_configurations(self):
         invalid_profiles = (

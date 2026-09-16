@@ -73,6 +73,20 @@ class GlobalRoutingTextTests(unittest.TestCase):
         self.assertEqual(disable_text("现有规则"), "现有规则")
         self.assertIsNone(disable_text(None))
 
+    def test_refresh_core_rule_preserves_user_text_and_visible_authorization_gate(self):
+        old_rule = "- 核心模式下，简单、机械和标准任务由主 agent 执行并应用原生质量门。"
+        original = "用户前置规则\n" + START_MARKER + "\n" + old_rule + "\n" + END_MARKER + "\n用户后置规则\n"
+        refreshed = enable_text(original)
+
+        self.assertNotIn(old_rule, refreshed)
+        self.assertIn("简单任务由主 agent 执行", refreshed)
+        self.assertIn("明确授权", refreshed)
+        self.assertIn("可见任务", refreshed)
+        self.assertIn("工具约束", refreshed)
+        self.assertIn("strict 模式不执行本插件的可见任务派发", refreshed)
+        self.assertEqual(disable_text(refreshed), "用户前置规则\n\n用户后置规则\n")
+        self.assertEqual(enable_text(refreshed), refreshed)
+
     def test_disable_preserves_content_added_before_and_after_managed_block(self):
         enabled = enable_text("原有规则")
         edited = "前置规则\n" + enabled + "后置规则\n"

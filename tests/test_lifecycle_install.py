@@ -105,6 +105,21 @@ class InstallTests(unittest.TestCase):
         self.assertFalse((self.codex_home / "agents/model-economy-architect.toml").exists())
         self.assertFalse(self.context.config_path.exists())
 
+    def test_install_rejects_symlinked_empty_agents_directory_before_writing_outside(self):
+        outside = Path(self.temporary_directory.name) / "outside-agents"
+        outside.mkdir()
+        self.codex_home.mkdir()
+        try:
+            self.context.agents_dir.symlink_to(outside, target_is_directory=True)
+        except OSError as exc:
+            self.skipTest(f"symlinks are unavailable: {exc}")
+
+        with self.assertRaises(ConflictError):
+            install(self.context, self.profile)
+
+        self.assertFalse(any(outside.iterdir()))
+        self.assertFalse(self.context.config_path.exists())
+
     def test_force_overwrites_unmanaged_collision(self):
         path = self.codex_home / "agents/model-economy-architect.toml"
         path.parent.mkdir(parents=True)

@@ -20,15 +20,21 @@ def render_agent(role: RoleSpec, profile: Profile) -> str:
     template_name = role.name.removeprefix("model-economy-")
     template = (_TEMPLATE_DIR / f"{template_name}.toml.tpl").read_text(encoding="utf-8")
     model_line = ""
+    if profile.role_models and profile.inherit_model:
+        raise ValueError("inherited profiles cannot define role model overrides")
     if not profile.inherit_model:
-        model_line = f"model = {_toml_string(profile.models[role.capability])}\n"
+        model = profile.role_models.get(role.name, profile.models[role.capability])
+        model_line = f"model = {_toml_string(model)}\n"
+    reasoning_effort = profile.reasoning.get(role.name, role.reasoning_effort)
+    if reasoning_effort not in {"low", "medium", "high"}:
+        raise ValueError("reasoning effort must be low, medium, or high")
 
     replacements = {
         "name": _toml_string(role.name),
         "description": _toml_string(role.description),
         "developer_instructions": _toml_string(role.developer_instructions),
         "model_line": model_line,
-        "reasoning_effort": _toml_string(role.reasoning_effort),
+        "reasoning_effort": _toml_string(reasoning_effort),
         "sandbox_mode": _toml_string(role.sandbox_mode),
     }
     for key, value in replacements.items():

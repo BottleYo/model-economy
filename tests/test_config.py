@@ -27,9 +27,18 @@ from model_economy_lib.config import (  # noqa: E402
 class ConfigTests(unittest.TestCase):
     def make_config(self) -> LocalConfig:
         return LocalConfig(
-            schema_version=1,
+            schema_version=2,
             profile="custom",
             models={"strong": "s", "balanced": "b", "economy": "e"},
+            role_models={"model-economy-implementer": "implementation"},
+            reasoning={
+                "model-economy-architect": "high",
+                "model-economy-final-reviewer": "high",
+                "model-economy-implementer": "medium",
+                "model-economy-reviewer": "medium",
+                "model-economy-explorer": "low",
+                "model-economy-batch-worker": "low",
+            },
         )
 
     def make_state(self) -> MachineState:
@@ -100,6 +109,26 @@ class ConfigTests(unittest.TestCase):
 
     def test_complete_valid_config_loads(self):
         text = (
+            'schema_version = 2\n'
+            'profile = "custom"\n'
+            '[models]\n'
+            'strong = "s"\n'
+            'balanced = "b"\n'
+            'economy = "e"\n'
+            '[role_models]\n'
+            'model-economy-implementer = "implementation"\n'
+            '[reasoning]\n'
+            'model-economy-architect = "high"\n'
+            'model-economy-final-reviewer = "high"\n'
+            'model-economy-implementer = "medium"\n'
+            'model-economy-reviewer = "medium"\n'
+            'model-economy-explorer = "low"\n'
+            'model-economy-batch-worker = "low"\n'
+        )
+        self.assertEqual(load_config_text(text), self.make_config())
+
+    def test_v1_loads_with_legacy_reasoning_but_new_writes_are_v2(self):
+        legacy = (
             'schema_version = 1\n'
             'profile = "custom"\n'
             '[models]\n'
@@ -107,7 +136,42 @@ class ConfigTests(unittest.TestCase):
             'balanced = "b"\n'
             'economy = "e"\n'
         )
-        self.assertEqual(load_config_text(text), self.make_config())
+        config = load_config_text(legacy)
+        self.assertEqual(config.schema_version, 1)
+        self.assertEqual(config.role_models, {})
+        self.assertEqual(config.reasoning["model-economy-implementer"], "high")
+        self.assertEqual(config.reasoning["model-economy-explorer"], "medium")
+        self.assertIn("schema_version = 2", dump_config(config))
+
+    def test_v2_requires_complete_reasoning_and_rejects_inherited_role_model_override(self):
+        partial_reasoning = (
+            'schema_version = 2\nprofile = "custom"\n[models]\nstrong = "s"\nbalanced = "b"\neconomy = "e"\n'
+            '[reasoning]\nmodel-economy-architect = "high"\n'
+        )
+        inherited_with_override = (
+            'schema_version = 2\nprofile = "inherited"\n[models]\n'
+            '[role_models]\nmodel-economy-implementer = "implementation"\n'
+            '[reasoning]\n'
+            'model-economy-architect = "high"\nmodel-economy-final-reviewer = "high"\n'
+            'model-economy-implementer = "medium"\nmodel-economy-reviewer = "medium"\n'
+            'model-economy-explorer = "low"\nmodel-economy-batch-worker = "low"\n'
+        )
+        with self.assertRaises(ConfigError):
+            load_config_text(partial_reasoning)
+        with self.assertRaises(ConfigError):
+            load_config_text(inherited_with_override)
+
+    def test_v2_rejects_unknown_role_models_and_invalid_effort(self):
+        common = (
+            'schema_version = 2\nprofile = "custom"\n[models]\nstrong = "s"\nbalanced = "b"\neconomy = "e"\n'
+            '[reasoning]\nmodel-economy-architect = "high"\nmodel-economy-final-reviewer = "high"\n'
+            'model-economy-implementer = "medium"\nmodel-economy-reviewer = "medium"\n'
+            'model-economy-explorer = "low"\nmodel-economy-batch-worker = "low"\n'
+        )
+        with self.assertRaises(ConfigError):
+            load_config_text(common + '[role_models]\nunknown = "model"\n')
+        with self.assertRaises(ConfigError):
+            load_config_text(common.replace('model-economy-explorer = "low"', 'model-economy-explorer = "xhigh"'))
 
     def test_config_rejects_legacy_machine_state_fields(self):
         with self.assertRaises(ConfigError):
@@ -131,9 +195,11 @@ class ConfigTests(unittest.TestCase):
             with self.subTest(case=case), self.assertRaises(ConfigError):
                 dump_config(
                     LocalConfig(
-                        schema_version=1,
+                        schema_version=2,
                         profile="custom",
                         models={"strong": value, "balanced": "b", "economy": "e"},
+                        role_models={},
+                        reasoning=self.make_config().reasoning,
                     )
                 )
 

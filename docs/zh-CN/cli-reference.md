@@ -2,6 +2,8 @@
 
 # CLI 参考
 
+> v0.7.0 已纳入角色覆盖、配置 schema 2 与迁移备份。旧标签不提供这些新参数；state 与 status JSON 仍为 schema 1。
+
 请在仓库根目录运行本地 CLI：
 
 ```sh
@@ -18,6 +20,10 @@ python3 plugins/model-economy/scripts/model_economy.py install --profile {inheri
 
 安装一个内置档案。`--force` 会覆盖冲突的受管理文件。
 
+v0.7.0 的 `install` 也接受下节的 `--role-model` 和 `--reasoning` 覆盖参数，仍需指定 `--profile`。
+
+已有受管理 schema 1 安装时，`install` 会拒绝操作并提示先运行 `upgrade`；`--force` 也不能绕过。这样重复安装不会跳过迁移备份或静默改变旧推理强度。需要主动重设档案时使用 `configure`。
+
 ## `configure`
 
 ```sh
@@ -27,13 +33,29 @@ python3 plugins/model-economy/scripts/model_economy.py configure --strong <stron
 
 只能使用 `--profile`，或同时给出三个显式模型参数，不能两者并用。
 
+v0.7.0 的 `configure` 可在基础档案上分别覆盖角色模型和推理强度：
+
+```sh
+python3 plugins/model-economy/scripts/model_economy.py configure --profile inherited --reasoning model-economy-implementer=medium --reasoning model-economy-explorer=low
+python3 plugins/model-economy/scripts/model_economy.py configure --profile openai-56 --role-model model-economy-implementer=MODEL_IMPLEMENTATION --reasoning model-economy-implementer=medium
+```
+
+`MODEL_IMPLEMENTATION` 是需要替换的模型标识占位符，不代表已验证可用模型。
+
+- `--reasoning ROLE=LEVEL` 与 `--role-model ROLE=MODEL` 可以各重复使用，但同一参数中的角色不能重复。
+- `ROLE` 使用完整的六角色名称；`LEVEL` 只接受 `low`、`medium`、`high`。
+- 角色模型覆盖优先于能力档模型；推理强度独立配置。继承式档案不接受局部模型覆盖，显式档案必须有完整三档映射。
+- `configure` 是按指定基础档案重新配置，不是仅修改现有配置的一个字段；需要保留的角色覆盖应一并提供。
+- 新安装及显式配置采用轻量默认：architect/final-reviewer 为 high，implementer/reviewer 为 medium，explorer/batch-worker 为 low。普通升级保留旧安装有效值。
+- 这些是角色请求配置，不会切换当前主会话模型，不探测账号模型列表，也不证明模型身份。
+
 ## `verify`
 
 ```sh
 python3 plugins/model-economy/scripts/model_economy.py verify [--quiet]
 ```
 
-检查本地安装状态。`--quiet` 会隐藏面向人的报告。
+检查本地安装状态，包括受管理角色的模型及推理强度是否符合配置。`--quiet` 会隐藏面向人的报告。
 
 ## `doctor`
 
@@ -59,6 +81,12 @@ python3 plugins/model-economy/scripts/model_economy.py upgrade [--dry-run] [--fo
 
 `--dry-run` 只报告受管理变更，不会写入。`--force` 会覆盖冲突的受管理文件。
 
+v0.7.0 读取 schema 1/2，写入 schema 2；state 与 status JSON 仍使用 schema 1。从旧配置迁移时，先检查原始配置和六角色哈希，再保留实际合法的推理强度，不静默应用新安装默认值。预览包含配置版本、模型和推理强度变化，且不创建备份。
+
+正式迁移在 `$CODEX_HOME/model-economy/backups/` 下创建唯一备份，保存原始受管理工件及恢复所需权限信息；备份失败不修改安装，事务失败恢复旧工件。重复升级应零写入。符号链接、硬链接及不合法配置不能通过 `--force` 变成安全输入。恢复步骤见[安装指南](installation.md)。
+
+v1→v2 迁移即使带 `--force` 也要求旧配置及角色的归属哈希匹配；先解决冲突才能迁移。已是 v2 的安装仍可用 `--force` 覆盖普通内容归属冲突，文件安全检查始终保留。
+
 ## `export-profile` 与 `import-profile`
 
 ```sh
@@ -68,6 +96,8 @@ python3 plugins/model-economy/scripts/model_economy.py import-profile <path> [--
 
 导出会写入当前档案；导入会安装文件中的档案。显式映射必须提供完整三个档位。
 
+v0.7.0 导出 schema 2，包含角色模型覆盖和完整六角色 reasoning；导入接受 schema 1/2。旧档案导入使用旧版推理默认，避免同一文件改变含义。导出不迁移当前安装，也不包含安装哈希、项目路径、任务标识或账号数据。schema 2 档案需要 v0.7.0+ 工具读取。
+
 ## `uninstall`
 
 ```sh
@@ -75,6 +105,8 @@ python3 plugins/model-economy/scripts/model_economy.py uninstall [--purge] [--fo
 ```
 
 不带 `--purge` 时，本地插件配置会保留。`--force` 会绕过固定名称的 Model Economy 角色文件的状态归属证明；只有确认这些文件应删除时才使用。
+
+迁移备份不会被 `uninstall --purge` 自动删除。
 
 ## `enable-global-routing` 与 `disable-global-routing`
 

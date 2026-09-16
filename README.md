@@ -2,6 +2,8 @@
 
 # Model Economy
 
+> **v0.7.0 — fine-grained routing and visible-task contracts.** Released as a stable version with maintainer approval to skip live desktop dispatch trials. Automated tests passed; live task creation, continuation, and complex parallel workflows remain unverified. See the [bilingual release notes](docs/release/0.7.0.md) for migration guidance and limitations.
+
 > Use strong models for decisions, not routine work.
 
 ![Model Economy](assets/social-preview.png)
@@ -24,9 +26,9 @@ It can also display local CodexBar token and estimated-cost summaries. It does n
 | Constraint | What it changes in practice |
 | --- | --- |
 | Risk comes before routing | Every task is classified as simple, standard, mechanical, or large/high-risk before a role or model tier is selected. |
-| Strong calls have policy-level caps | The task-class maximum is `0`, `1`, or `2`; these are routing-policy limits, not proof of model identity or platform-enforced quotas. |
+| Strong calls have policy-level caps | Role slots are `0`, `1`, or `2` by class; execution requests are capped at `0`, `2`, or `4`, with at most two per allowed strong role. These are not platform quotas or identity verification. |
 | Roles have permissions | The strong architect and final reviewer are read-only. Implementation stays with `balanced`; fixed-rule batch edits may use `economy`. |
-| Orchestration is bounded | A task may start at most three subagents, recursive delegation is prohibited, and small work normally starts none. |
+| Orchestration is bounded | Internal agents and visible tasks share a root budget of three new contexts and six execution requests, with at most two concurrent by default. No recursive delegation or filling slots for small work. |
 | Quality gates scale with risk | Intent, approval, planning, testing, and completion evidence are native gates, but routine work does not inherit a full methodology. |
 | One workflow owns the task | Model Economy does not silently stack another orchestrator on top. A full Superpowers handoff requires explicit authorization for the current task. |
 
@@ -41,8 +43,8 @@ Three optional leaf skills keep context work small: `domain-context` extracts on
 | Primary goal | Control capability, cost exposure, permissions, and evidence by risk | Apply a complete development methodology from intent through branch completion |
 | Default entry | Classify the task first; simple work can proceed directly | Begin with brainstorming and design clarification for building tasks |
 | Plans and tests | Scale to ambiguity and behavioral risk | Detailed plans and strict RED-GREEN-REFACTOR TDD are core workflow requirements |
-| Subagents | Conditional, non-recursive, at most three per task | May assign a fresh subagent to each planned task with two-stage review |
-| Strong-model budget | Explicit class cap: `0` / `1` / `2` | No comparable capability-tier call cap is specified in the published workflow |
+| Delegation | Internal and visible channels share the root budget; conditional and non-recursive | May assign a fresh subagent to each planned task with two-stage review |
+| Strong-model budget | Role slots `0` / `1` / `2`; execution requests `0` / `2` / `4`, at most two per role | No comparable capability-tier call cap is specified in the published workflow |
 | Best fit | Daily development where routine speed and high-risk rigor must coexist | Tasks where the user explicitly wants the complete methodology |
 | Coexistence | Owns the default route; hands off only on an explicit current-task request | Takes orchestration authority only after that explicit handoff |
 
@@ -50,26 +52,32 @@ This is a workflow choice, not a claim that one tool is universally better. If y
 
 ## How it works
 
-![Model Economy task flow](assets/model-economy-flow-en.svg)
+[v0.6.1 stable flow diagram (old budgets, for that version only)](assets/model-economy-flow-en.svg)
 
-Tasks are classified in a fixed order: large or high-risk, mechanical, simple, then standard. The first matching class decides the permitted roles and the maximum number of `strong` calls. See [how it works](docs/en/how-it-works.md) for the complete policy.
+Tasks are classified in a fixed order: large or high-risk, mechanical, simple, then standard. The first match determines roles, strong role slots, and execution-request limits. See [how it works](docs/en/how-it-works.md) for the complete policy.
 
-The role names in this table describe a healthy **enhanced mode**. In core mode, simple, mechanical, and standard tasks use the main agent; large/high-risk work stops at the compatibility gate described below.
+The role names below describe healthy **enhanced mode**. In core mode, simple work stays with the main agent. Mechanical and standard work defaults there too, with visible implementation available only when explicitly authorized and supported by the host. High-risk compatibility gates remain.
 
 | Example | Enhanced-mode route |
 | --- | --- |
 | Known configuration key, known file, direct check | Simple: main agent, no subagent, `strong` maximum `0` |
 | Repeated edit with a fixed rule, bounded files, and per-item validation | Mechanical: `economy` batch worker, only when all five mechanical conditions hold |
 | Cross-module bug with a known product behavior | Standard: `balanced` implementation; explorer or reviewer only when their evidence is needed |
-| Authentication, permissions, new architecture, or wide blast radius | Large/high-risk: read-only strong architect, balanced implementation, read-only strong final reviewer; `strong` maximum `2` |
+| Authentication, permissions, new architecture, or wide blast radius | Large/high-risk: read-only architecture, balanced implementation, independent read-only final review; two strong role slots and at most four requests, two per role |
 
 ## Core and enhanced modes
 
-Directory-style installation starts in **core mode**. All four skills work without user-level six-role files: simple, mechanical, and standard work stays with the main agent and still uses the native quality gates. Core mode does not claim custom role isolation or independent model mapping.
+Directory-style installation starts in **core mode**. All four skills work without user-level six-role files and retain native quality gates. A visible implementation channel does not turn core into enhanced mode or prove custom role isolation or independent model mapping.
 
 The repository CLI can add **enhanced mode**. It installs six local role definitions and an inherited or explicit three-tier model mapping. Only a complete, hash-matching, current enhancement is treated as enabled. Partial, modified, or outdated enhancement artifacts are reported as `degraded` and fail closed.
 
 For large/high-risk work in core mode, Model Economy reports that isolated architecture and final-review roles are unavailable. The user may install enhanced mode or explicitly approve a reduced-assurance single-agent path; that path is never described as the complete Model Economy high-risk workflow. Model and role identity remain unverified in both modes.
+
+### Visible tasks (v0.7.0 in development)
+
+Execution preference can be `auto`, `visible-first`, or `current-only`, but preference is not creation authority. New sidebar tasks require an explicit user request or standing work-package creation authorization in user-confirmed, trusted project rules. Stricter current host-tool requirements still take precedence; project rules cannot bypass them. Do not split simple work. Reuse the original task for direct fixes, record model and reasoning separately, and never silently replace rejected choices.
+
+“All delegated work must be visible” includes implementation and review by default; narrow it only on an explicit implementation-only request. A read-only prompt is not a read-only sandbox. Missing mandatory high-risk review permissions must be reported and block the route. Root budgets count continuations and retries and do not reset on splits or model changes. See [how it works](docs/en/how-it-works.md).
 
 ## Install
 
@@ -142,12 +150,12 @@ The adapter reports CodexBar's local token totals, model breakdowns, and estimat
 
 ## Task classification
 
-| Class | Conditions | Enhanced-mode default capability | `strong` policy maximum |
+| Class | Conditions | Enhanced-mode default capability | Strong slots / execution requests |
 | --- | --- | --- | --- |
-| Large or high-risk | Any high-risk boundary, new architecture, or wide blast radius | `strong` gates plus `balanced` implementation | 2 |
-| Mechanical | All five fixed-rule conditions hold | `economy` batch work | 0 |
-| Simple | Known files, no open judgment, direct verification, and no creative or behavioral change | Main agent | 0 |
-| Standard | The fallback class | `balanced` | 1 |
+| Large or high-risk | Any high-risk boundary, new architecture, or wide blast radius | `strong` gates plus `balanced` implementation | 2 / 4 |
+| Mechanical | All five fixed-rule conditions hold | `economy` batch work | 0 / 0 |
+| Simple | Known files, no open judgment, direct verification, and no creative or behavioral change | Main agent | 0 / 0 |
+| Standard | The fallback class | `balanced` | 1 / 2 |
 
 ## Enhanced-mode roles
 
