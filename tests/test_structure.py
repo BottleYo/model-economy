@@ -34,22 +34,10 @@ class StructureTests(unittest.TestCase):
 
     def test_readmes_share_the_public_information_architecture(self):
         expected_sections = (
-            "Why it exists",
-            "What makes it different",
-            "Model Economy vs full Superpowers",
-            "How it works",
-            "Core and enhanced modes",
             "Install",
-            "First experience",
-            "Use it on your terms",
-            "Task classification",
-            "Enhanced-mode roles",
-            "Global routing",
-            "Security and trust boundaries",
+            "Already installed? Ask Codex to update it",
+            "Before you use it",
             "Documentation",
-            "Current limitations",
-            "Contributing",
-            "License",
         )
         english = (ROOT / "README.md").read_text(encoding="utf-8")
         chinese = (ROOT / "README.zh-CN.md").read_text(encoding="utf-8")
@@ -60,12 +48,23 @@ class StructureTests(unittest.TestCase):
         self.assertIn("assets/model-economy-flow-zh-CN.svg", chinese)
         self.assertIn("A tiny edit should not need a committee.", english)
         self.assertIn("小改动别开大会，难题再请强模型", chinese)
-        self.assertIn("complete software development methodology", english)
-        self.assertIn("完整软件开发方法论", chinese)
         self.assertIn("This task must not use Model Economy", english)
         self.assertIn("本任务不要使用 Model Economy", chinese)
-        self.assertIn("three new contexts and six execution requests", english)
-        self.assertIn("最多新建三个上下文、六次执行请求", chinese)
+        for source, language, security in (
+            (english, "en", "SECURITY.md"),
+            (chinese, "zh-CN", "SECURITY.zh-CN.md"),
+        ):
+            self.assertLessEqual(len(source.splitlines()), 90)
+            self.assertEqual(source.count("<details>"), 2)
+            self.assertEqual(source.count("</details>"), 2)
+            self.assertNotIn("<details open", source)
+            self.assertNotIn("| ---", source)
+            self.assertIn("codex plugin add model-economy@model-economy-public", source)
+            for document in ("installation.md", "how-it-works.md", "cli-reference.md"):
+                self.assertIn(f"docs/{language}/{document}", source)
+            self.assertIn(security, source)
+        self.assertIn("remain unverified", english)
+        self.assertIn("尚未验证", chinese)
 
         last_index = -1
         for section in expected_sections:
@@ -75,33 +74,26 @@ class StructureTests(unittest.TestCase):
 
         last_index = -1
         for section in (
-            "为什么需要它",
-            "特别之处",
-            "Model Economy 与完整 Superpowers",
-            "工作原理",
-            "核心模式与增强模式",
             "安装",
-            "首次体验",
-            "按你的方式使用",
-            "任务分类",
-            "增强模式角色",
-            "全局路由",
-            "安全与信任边界",
+            "已经装过？把这段交给 Codex",
+            "使用前知道这几件事",
             "文档",
-            "当前限制",
-            "贡献",
-            "许可证",
         ):
             index = chinese.index(f"## {section}")
             self.assertGreater(index, last_index)
             last_index = index
 
-    def test_readmes_compare_workflows_without_unsupported_adoption_claims(self):
+    def test_homepages_omit_usage_commands_and_workflow_comparisons(self):
+        for name in ("README.md", "README.zh-CN.md", "site/index.html"):
+            source = (ROOT / name).read_text(encoding="utf-8").lower()
+            self.assertNotIn("codexbar", source)
+            self.assertNotIn("superpowers", source)
+            self.assertNotIn("model_economy.py usage", source)
+
+    def test_readmes_avoid_unsupported_adoption_claims(self):
         english = (ROOT / "README.md").read_text(encoding="utf-8").lower()
         chinese = (ROOT / "README.zh-CN.md").read_text(encoding="utf-8")
 
-        self.assertIn("https://github.com/obra/superpowers", english)
-        self.assertIn("https://github.com/obra/superpowers", chinese)
         self.assertNotIn("abandoned", english)
         self.assertNotIn("being abandoned", english)
         self.assertNotIn("被抛弃", chinese)
@@ -116,14 +108,6 @@ class StructureTests(unittest.TestCase):
             encoding="utf-8",
         ).stdout
         command_sets = {
-            ("README.md", "README.zh-CN.md"): (
-                "install",
-                "configure",
-                "verify",
-                "usage",
-                "enable-global-routing",
-                "disable-global-routing",
-            ),
             ("docs/en/installation.md", "docs/zh-CN/installation.md"): (
                 "install",
                 "configure",
@@ -184,10 +168,8 @@ class StructureTests(unittest.TestCase):
             with self.subTest(target=target):
                 self.assertTrue((ROOT / target).is_file(), f"missing local image: {target}")
 
-    def test_readmes_and_security_docs_describe_marked_agents_block(self):
+    def test_security_docs_describe_marked_agents_block(self):
         expected = {
-            "README.md": "marked, managed Model Economy block",
-            "README.zh-CN.md": "带标记的 Model Economy 受管理区块",
             "SECURITY.md": "marked, managed Model Economy block",
             "SECURITY.zh-CN.md": "带标记的 Model Economy 受管理区块",
         }
@@ -223,8 +205,6 @@ class StructureTests(unittest.TestCase):
 
     def test_fail_closed_docs_name_force_as_explicit_user_override(self):
         expected = {
-            "README.md": "Only an explicit user-authorized `--force` operation overrides",
-            "README.zh-CN.md": "只有用户明确授权的 `--force` 操作可以越过",
             "SECURITY.md": "Only an explicit user-authorized `--force` operation overrides",
             "SECURITY.zh-CN.md": "只有用户明确授权的 `--force` 操作可以越过",
         }
@@ -275,15 +255,15 @@ class StructureTests(unittest.TestCase):
         skill = (ROOT / "plugins/model-economy/skills/cost-aware-development/SKILL.md").read_text(
             encoding="utf-8"
         )
-        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        installation = (ROOT / "docs/en/installation.md").read_text(encoding="utf-8")
 
         self.assertEqual(manifest["version"], "0.7.0")
         self.assertIn('version = "0.7.0"', pyproject)
         self.assertIn('Context(home, PLUGIN_ROOT, "0.7.0")', cli)
         self.assertIn("软件开发", skill.split("---", 2)[1])
-        self.assertIn("enable-global-routing", readme)
-        self.assertIn("disable-global-routing", readme)
-        self.assertIn("A project's own `AGENTS.md` can override", readme)
+        self.assertIn("enable-global-routing", installation)
+        self.assertIn("disable-global-routing", installation)
+        self.assertIn("A project-level `AGENTS.md` can override", installation)
 
     def test_ci_checkout_fetches_full_history(self):
         workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
@@ -294,20 +274,12 @@ class StructureTests(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/ci.yml").read_text(encoding="utf-8")
         self.assertIn('PYTHONUTF8: "1"', workflow)
 
-    def test_readme_custom_commands_are_single_line_for_posix_and_powershell(self):
-        readme = (ROOT / "README.md").read_text(encoding="utf-8")
-        custom_start = readme.index("# 3. custom")
-        custom_end = readme.index("```", custom_start)
-        custom = readme[custom_start:custom_end]
-        self.assertNotIn("\\\n", custom)
-        self.assertIn(
-            "python3 plugins/model-economy/scripts/model_economy.py configure --strong <strong-model> --balanced <balanced-model> --economy <economy-model>",
-            custom,
-        )
-        self.assertIn(
-            "py -3.11 plugins/model-economy/scripts/model_economy.py configure --strong <strong-model> --balanced <balanced-model> --economy <economy-model>",
-            custom,
-        )
+    def test_installation_custom_commands_are_single_line_with_windows_guidance(self):
+        command = "python3 plugins/model-economy/scripts/model_economy.py configure --strong <strong-model> --balanced <balanced-model> --economy <economy-model>"
+        for language in ("en", "zh-CN"):
+            source = (ROOT / f"docs/{language}/installation.md").read_text(encoding="utf-8")
+            self.assertIn(command, source.splitlines())
+            self.assertIn("`py -3.11`", source)
 
 
 if __name__ == "__main__":
