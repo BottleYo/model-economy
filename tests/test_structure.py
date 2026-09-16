@@ -64,8 +64,8 @@ class StructureTests(unittest.TestCase):
         self.assertIn("完整软件开发方法论", chinese)
         self.assertIn("This task must not use Model Economy", english)
         self.assertIn("本任务不要使用 Model Economy", chinese)
-        self.assertIn("at most three subagents", english)
-        self.assertIn("最多启动三个 subagent", chinese)
+        self.assertIn("three new contexts and six execution requests", english)
+        self.assertIn("最多新建三个上下文、六次执行请求", chinese)
 
         last_index = -1
         for section in expected_sections:
@@ -277,9 +277,9 @@ class StructureTests(unittest.TestCase):
         )
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
-        self.assertEqual(manifest["version"], "0.6.1")
-        self.assertIn('version = "0.6.1"', pyproject)
-        self.assertIn('Context(home, PLUGIN_ROOT, "0.6.1")', cli)
+        self.assertEqual(manifest["version"], "0.7.0")
+        self.assertIn('version = "0.7.0"', pyproject)
+        self.assertIn('Context(home, PLUGIN_ROOT, "0.7.0")', cli)
         self.assertIn("软件开发", skill.split("---", 2)[1])
         self.assertIn("enable-global-routing", readme)
         self.assertIn("disable-global-routing", readme)

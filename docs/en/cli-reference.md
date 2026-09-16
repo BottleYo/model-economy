@@ -2,6 +2,8 @@
 
 # CLI reference
 
+> v0.7.0 includes role overrides, config schema 2, and migration backups. Older tags do not provide these new options. State and status JSON remain schema 1.
+
 Run the local CLI from the repository root:
 
 ```sh
@@ -18,6 +20,10 @@ python3 plugins/model-economy/scripts/model_economy.py install --profile {inheri
 
 Installs one bundled profile. `--force` overwrites conflicting managed files.
 
+In v0.7.0, `install` also accepts the `--role-model` and `--reasoning` overrides described below. `--profile` remains required.
+
+For an existing managed schema 1 installation, `install` refuses the operation and asks you to run `upgrade` first, even with `--force`. Reinstallation cannot skip migration backups or silently change legacy reasoning. Use `configure` when you intentionally want to reset the profile.
+
 ## `configure`
 
 ```sh
@@ -27,13 +33,29 @@ python3 plugins/model-economy/scripts/model_economy.py configure --strong <stron
 
 Use either `--profile` or all three explicit model arguments, never both.
 
+In v0.7.0, `configure` can override role models and reasoning independently on top of the selected base profile:
+
+```sh
+python3 plugins/model-economy/scripts/model_economy.py configure --profile inherited --reasoning model-economy-implementer=medium --reasoning model-economy-explorer=low
+python3 plugins/model-economy/scripts/model_economy.py configure --profile openai-56 --role-model model-economy-implementer=MODEL_IMPLEMENTATION --reasoning model-economy-implementer=medium
+```
+
+Replace `MODEL_IMPLEMENTATION` with a model identifier. It is a placeholder, not a verified available model.
+
+- Repeat `--reasoning ROLE=LEVEL` and `--role-model ROLE=MODEL` for different roles; duplicate roles within either option are rejected.
+- Use the full name of one of the six roles. `LEVEL` accepts only `low`, `medium`, or `high`.
+- Role model overrides take precedence over capability mappings. Reasoning is configured separately. Inherited profiles reject partial model overrides; explicit profiles require all three capability mappings.
+- `configure` rebuilds configuration from the selected base profile; it is not a one-field edit of the existing installation. Supply every override you want to retain.
+- Fresh installations and explicit configuration use lean defaults: high for architect/final-reviewer, medium for implementer/reviewer, and low for explorer/batch-worker. Normal upgrades preserve existing effective values.
+- These settings describe role requests. They do not switch the current main conversation's model, query account model catalogs, or verify model identity.
+
 ## `verify`
 
 ```sh
 python3 plugins/model-economy/scripts/model_economy.py verify [--quiet]
 ```
 
-Checks the local installation. `--quiet` suppresses the human-readable report.
+Checks the local installation, including whether managed role models and reasoning match the configuration. `--quiet` suppresses the human-readable report.
 
 ## `doctor`
 
@@ -59,6 +81,12 @@ python3 plugins/model-economy/scripts/model_economy.py upgrade [--dry-run] [--fo
 
 `--dry-run` reports the managed changes without writing them. `--force` overwrites conflicting managed files.
 
+v0.7.0 reads config schema 1/2 and writes schema 2; state and status JSON remain at schema 1. Migration validates the original config and role hashes before preserving effective valid reasoning values. It does not silently apply fresh-install defaults. The preview shows schema, model, and reasoning changes without creating a backup.
+
+Before migration, a unique directory under `$CODEX_HOME/model-economy/backups/` stores the original managed artifacts and permission information needed for recovery. Backup failure leaves the installation unchanged; transaction failure restores its previous artifacts. Repeated upgrades should perform zero writes. `--force` does not make symlinks, hard links, or invalid configuration safe. See the [installation guide](installation.md) for recovery.
+
+A v1-to-v2 migration requires matching ownership hashes for the old config and roles even with `--force`; resolve conflicts first. Existing v2 installations can still use `--force` for ordinary content ownership conflicts, while filesystem safety checks remain in place.
+
 ## `export-profile` and `import-profile`
 
 ```sh
@@ -68,6 +96,8 @@ python3 plugins/model-economy/scripts/model_economy.py import-profile <path> [--
 
 Export writes the current profile. Import installs a profile from a file; explicit mappings must provide all three tiers.
 
+v0.7.0 exports schema 2 with role model overrides and complete six-role reasoning; imports accept schema 1/2. Old profiles retain legacy reasoning defaults. Export does not migrate the installation and excludes installation hashes, project paths, task identifiers, and account data. Schema 2 profiles require v0.7.0+ tools.
+
 ## `uninstall`
 
 ```sh
@@ -75,6 +105,8 @@ python3 plugins/model-economy/scripts/model_economy.py uninstall [--purge] [--fo
 ```
 
 Without `--purge`, local plugin configuration is retained. `--force` bypasses state ownership proof for the fixed Model Economy agent-file names; use it only when those files should be removed.
+
+`uninstall --purge` does not automatically delete migration backups.
 
 ## `enable-global-routing` and `disable-global-routing`
 

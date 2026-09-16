@@ -11,7 +11,7 @@ import sys
 import tomllib
 from typing import Mapping
 
-from .config import ConfigError, load_config, load_state
+from .config import ConfigError, LocalConfig, load_config, load_state
 from .filesystem import sha256_bytes
 from .lifecycle import Context
 from .models import ROLES
@@ -52,6 +52,7 @@ class StatusReport:
     installed_template_version: str | None
     template_current: bool | None
     exit_code: int
+    reasoning_matches: bool | None = None
 
 
 def find_codex(codex_bin: str | None, env: Mapping[str, str] | None = None) -> str | None:
@@ -82,20 +83,25 @@ def _directory_is_accessible(codex_home: Path) -> bool:
     return candidate.is_dir() and os.access(candidate, os.R_OK | os.W_OK | os.X_OK)
 
 
-def _role_models_match(config_models: dict[str, str], role_paths: dict[str, Path]) -> bool:
+def _role_configuration_matches(config: LocalConfig, role_paths: dict[str, Path]) -> tuple[bool, bool]:
     expected_capabilities = {role.name: role.capability for role in ROLES}
+    models_match = True
+    reasoning_match = True
     try:
         for filename, path in role_paths.items():
             document = tomllib.loads(path.read_text(encoding="utf-8"))
-            expected = config_models.get(expected_capabilities[filename.removesuffix(".toml")])
+            role_name = filename.removesuffix(".toml")
+            expected = config.role_models.get(role_name, config.models.get(expected_capabilities[role_name]))
             if expected is None:
                 if "model" in document:
-                    return False
+                    models_match = False
             elif document.get("model") != expected:
-                return False
+                models_match = False
+            if document.get("model_reasoning_effort") != config.reasoning.get(role_name):
+                reasoning_match = False
     except (OSError, tomllib.TOMLDecodeError):
-        return False
-    return True
+        return False, False
+    return models_match, reasoning_match
 
 
 def _status_artifact_exists(path: Path) -> bool:
@@ -264,7 +270,8 @@ def inspect_status(context: Context) -> StatusReport:
         if set(config.models) == {"strong", "balanced", "economy"}
         else "invalid"
     )
-    if present == len(role_paths) and not _role_models_match(config.models, role_paths):
+    models_match, reasoning_match = _role_configuration_matches(config, role_paths)
+    if present == len(role_paths) and not models_match:
         mapping_status = "mismatch"
 
     if recorded_names != expected_names or recorded_missing or present != len(role_paths):
@@ -279,7 +286,7 @@ def inspect_status(context: Context) -> StatusReport:
             exit_code=1,
         )
 
-    if mapping_status in {"invalid", "mismatch"}:
+    if mapping_status in {"invalid", "mismatch"} or not reasoning_match:
         return StatusReport(
             **base,
             mode="degraded",
@@ -289,6 +296,7 @@ def inspect_status(context: Context) -> StatusReport:
             installed_template_version=state.template_version,
             template_current=state.template_version == context.template_version,
             exit_code=1,
+            reasoning_matches=reasoning_match,
         )
 
     if state.template_version != context.template_version:
@@ -312,6 +320,7 @@ def inspect_status(context: Context) -> StatusReport:
         installed_template_version=state.template_version,
         template_current=True,
         exit_code=0,
+        reasoning_matches=True,
     )
 
 
@@ -326,6 +335,7 @@ def verify_installation(context: Context) -> VerificationReport:
         "role_hashes": False,
         "config_hash": False,
         "model_mapping": False,
+        "reasoning": False,
         "template_version": False,
     }
     managed_paths = (*role_paths.values(), context.config_path, context.state_path)
@@ -349,9 +359,9 @@ def verify_installation(context: Context) -> VerificationReport:
     checks["config_hash"] = (
         sha256_bytes(context.config_path.read_bytes()) == state.config_sha256
     )
-    checks["model_mapping"] = set(config.models) in (set(), {"strong", "balanced", "economy"}) and (
-        _role_models_match(config.models, role_paths)
-    )
+    models_match, reasoning_match = _role_configuration_matches(config, role_paths)
+    checks["model_mapping"] = set(config.models) in (set(), {"strong", "balanced", "economy"}) and models_match
+    checks["reasoning"] = reasoning_match
     checks["template_version"] = state.template_version == context.template_version
     return VerificationReport(all(checks.values()), checks)
 

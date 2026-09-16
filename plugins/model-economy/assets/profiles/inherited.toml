@@ -1,2 +1,10 @@
 name = "inherited"
 inherit_model = true
+
+[reasoning]
+model-economy-architect = "high"
+model-economy-final-reviewer = "high"
+model-economy-implementer = "medium"
+model-economy-reviewer = "medium"
+model-economy-explorer = "low"
+model-economy-batch-worker = "low"

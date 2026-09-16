@@ -4,6 +4,14 @@
 
 This project follows Semantic Versioning. Notable changes are recorded here.
 
+## 0.7.0 - 2026-09-16
+
+- Added role-specific model overrides and independent reasoning settings; new defaults use medium for implementation/review and low for exploration/batch work.
+- Added config schema 2 with v1 compatibility, migration backups, effective-setting preservation, and transactional recovery; state/status stay schema 1.
+- Added conditional visible-task contracts, explicit creation authorization, task reuse, model-rejection handling, and shared policy-level context/request budgets.
+- Added a self-contained work-package template and bilingual migration/routing guidance.
+- Stable release approved with live desktop task creation/continuation/parallel trials waived, not passed. Automated tests and independent contract review passed; model identity and runtime enforcement remain unverified. See [release notes](docs/release/0.7.0.md).
+
 ## 0.6.1 - 2026-07-22
 
 - Narrowed plain `doctor` to managed-file verification plus `codex --version`, avoiding the broader Codex diagnostic that inspects authentication and local state metadata.

@@ -11,6 +11,20 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class PublicReleaseTests(unittest.TestCase):
+    def test_070_release_discloses_waived_live_trials(self):
+        notes = (ROOT / "docs/release/0.7.0.md").read_text(encoding="utf-8")
+        self.assertIn("## 简体中文", notes)
+        self.assertIn("## English", notes)
+        self.assertIn("尚未验证", notes)
+        self.assertIn("remain unverified", notes)
+        for name in ("README.md", "README.zh-CN.md"):
+            text = (ROOT / name).read_text(encoding="utf-8")
+            self.assertIn("docs/release/0.7.0.md", text)
+            self.assertNotIn("0.7.0-rc.1", text)
+        site = (ROOT / "site/index.html").read_text(encoding="utf-8")
+        self.assertIn("releases/tag/v0.7.0", site)
+        self.assertIn("remain unverified", site)
+
     def test_community_health_and_submission_materials_exist(self):
         required = (
             "AGENTS.md",

@@ -4,10 +4,11 @@ import argparse
 import json
 import os
 from pathlib import Path
+import stat
 import sys
 from typing import Sequence
 
-from .config import ConfigError, export_profile, import_profile, load_config
+from .config import ConfigError, default_reasoning, export_profile, import_profile_config, load_config
 from .doctor import (
     SmokeReport,
     StatusReport,
@@ -20,7 +21,7 @@ from .doctor import (
 from .filesystem import resolve_codex_home
 from .global_routing import disable_global_routing, enable_global_routing
 from .lifecycle import ChangeSet, ConflictError, Context, install, plan_upgrade, uninstall, upgrade
-from .models import Profile
+from .models import Profile, ROLES
 from .profiles import load_profile
 from .usage import (
     UsageError as UsageDataError,
@@ -91,6 +92,8 @@ def _build_parser() -> Parser:
 
     install_parser = command("install")
     install_parser.add_argument("--profile", choices=PROFILE_NAMES, required=True)
+    install_parser.add_argument("--role-model", action="append", default=[], metavar="ROLE=MODEL")
+    install_parser.add_argument("--reasoning", action="append", default=[], metavar="ROLE=LEVEL")
     install_parser.add_argument("--force", action="store_true")
 
     configure_parser = command("configure")
@@ -98,6 +101,8 @@ def _build_parser() -> Parser:
     configure_parser.add_argument("--strong")
     configure_parser.add_argument("--balanced")
     configure_parser.add_argument("--economy")
+    configure_parser.add_argument("--role-model", action="append", default=[], metavar="ROLE=MODEL")
+    configure_parser.add_argument("--reasoning", action="append", default=[], metavar="ROLE=LEVEL")
     configure_parser.add_argument("--force", action="store_true")
 
     verify_parser = command("verify")
@@ -139,7 +144,23 @@ def _context(codex_home: Path | None) -> Context:
         if codex_home is not None
         else resolve_codex_home(os.environ)
     )
-    return Context(home, PLUGIN_ROOT, "0.6.1")
+    return Context(home, PLUGIN_ROOT, "0.7.0")
+
+
+def _safe_managed_config(context: Context):
+    path = context.config_path
+    current = path
+    while current != context.codex_home:
+        if current.is_symlink():
+            raise ConfigError("config artifact is not safe to read")
+        current = current.parent
+    try:
+        metadata = path.lstat()
+    except OSError as exc:
+        raise ConfigError("config artifact is not safe to read") from exc
+    if not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1:
+        raise ConfigError("config artifact is not safe to read")
+    return load_config(path)
 
 
 def _load_bundled_profile(name: str) -> Profile:
@@ -154,14 +175,47 @@ def _custom_profile(args: argparse.Namespace) -> Profile:
         return _load_bundled_profile(args.profile)
     if any(value is None for value in supplied.values()):
         raise UsageError("configure 需要 --profile 或完整的 --strong/--balanced/--economy")
-    return Profile("custom", False, supplied)
+    return Profile("custom", False, supplied, reasoning=default_reasoning())
+
+
+def _parse_role_assignments(values: list[str], *, option: str, allowed: set[str]) -> dict[str, str]:
+    result: dict[str, str] = {}
+    for raw in values:
+        role, separator, value = raw.partition("=")
+        if not separator or not role or not value:
+            raise UsageError(f"{option} 必须使用 ROLE=VALUE 格式")
+        if role not in allowed:
+            raise UsageError(f"{option} 包含未知角色：{role}")
+        if role in result:
+            raise UsageError(f"{option} 不能重复指定角色：{role}")
+        result[role] = value
+    return result
+
+
+def _with_overrides(profile: Profile, args: argparse.Namespace) -> Profile:
+    roles = {role.name for role in ROLES}
+    role_models = _parse_role_assignments(args.role_model, option="--role-model", allowed=roles)
+    reasoning = _parse_role_assignments(args.reasoning, option="--reasoning", allowed=roles)
+    if role_models and profile.inherit_model:
+        raise UsageError("inherited 档案不能使用 --role-model")
+    if any(not model.isprintable() or len(model) > 128 for model in role_models.values()):
+        raise UsageError("--role-model 的模型名必须为 1 到 128 个可打印字符")
+    if any(effort not in {"low", "medium", "high"} for effort in reasoning.values()):
+        raise UsageError("--reasoning 仅支持 low、medium 或 high")
+    merged_models = dict(profile.role_models)
+    merged_models.update(role_models)
+    merged_reasoning = default_reasoning()
+    merged_reasoning.update(profile.reasoning)
+    merged_reasoning.update(reasoning)
+    return Profile(profile.name, profile.inherit_model, profile.models, merged_models, merged_reasoning)
 
 
 def _imported_profile(path: Path) -> Profile:
-    name, models = import_profile(path)
+    config = import_profile_config(path)
+    name, models = config.profile, config.models
     if models and set(models) != {"strong", "balanced", "economy"}:
         raise ConfigError("导入档案的模型映射必须完整")
-    return Profile(name, not models, models)
+    return Profile(name, not models, models, config.role_models, config.reasoning)
 
 
 def _print_changes(changes: ChangeSet) -> None:
@@ -170,6 +224,24 @@ def _print_changes(changes: ChangeSet) -> None:
         f"新增 {len(changes.created)}，更新 {len(changes.updated)}，"
         f"移除 {len(changes.removed)}，未变更 {len(changes.unchanged)}。"
     )
+
+
+def _print_upgrade_changes(changes: ChangeSet, *, dry_run: bool) -> None:
+    if changes.migration_from_schema is not None:
+        print(f"升级预览：schema v{changes.migration_from_schema} → v{changes.migration_to_schema}")
+        print(f"模型映射：保留 {changes.migration_models}")
+        count = changes.migration_role_models or 0
+        print(f"角色模型覆盖：保留 {count} 项")
+        effort = "；".join(
+            f"{role} {value} → {value}"
+            for role, value in sorted(changes.migration_reasoning.items())
+        )
+        print(f"推理强度：{effort}")
+        if dry_run:
+            print("迁移备份：不会创建（dry-run）")
+        elif changes.backup_path is not None:
+            print(f"迁移备份：{changes.backup_path}")
+    _print_changes(changes)
 
 
 def _print_verification(checks: dict[str, bool]) -> None:
@@ -203,6 +275,8 @@ def _print_status(report: StatusReport) -> None:
     print(f"角色哈希：{hashes}")
     print(f"模型映射：{report.model_mapping_status}")
     print(f"模板版本：{template}")
+    if report.reasoning_matches is False:
+        print("推理强度：与配置不一致")
     print("角色身份：未验证")
     print("模型身份：未验证")
     if report.mode == "core":
@@ -245,10 +319,17 @@ def _print_usage(summary: UsageSummary) -> None:
 def _run(args: argparse.Namespace) -> int:
     context = _context(args.codex_home)
     if args.command == "install":
-        _print_changes(install(context, _load_bundled_profile(args.profile), args.force))
+        _print_changes(install(context, _with_overrides(_load_bundled_profile(args.profile), args), args.force))
         return SUCCESS
     if args.command == "configure":
-        _print_changes(install(context, _custom_profile(args), args.force))
+        _print_changes(
+            install(
+                context,
+                _with_overrides(_custom_profile(args), args),
+                args.force,
+                reconfigure_v1=True,
+            )
+        )
         return SUCCESS
     if args.command == "verify":
         report = verify_installation(context)
@@ -275,10 +356,10 @@ def _run(args: argparse.Namespace) -> int:
         if changes.conflicts:
             paths = ", ".join(str(path) for path in changes.conflicts)
             raise ConflictError(f"unmanaged paths: {paths}")
-        _print_changes(changes)
+        _print_upgrade_changes(changes, dry_run=args.dry_run)
         return SUCCESS
     if args.command == "export-profile":
-        export_profile(load_config(context.config_path), args.path)
+        export_profile(_safe_managed_config(context), args.path)
         print("档案已导出。")
         return SUCCESS
     if args.command == "import-profile":

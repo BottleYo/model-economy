@@ -5,3 +5,11 @@ inherit_model = false
 strong = "gpt-5.6-sol"
 balanced = "gpt-5.6-terra"
 economy = "gpt-5.6-luna"
+
+[reasoning]
+model-economy-architect = "high"
+model-economy-final-reviewer = "high"
+model-economy-implementer = "medium"
+model-economy-reviewer = "medium"
+model-economy-explorer = "low"
+model-economy-batch-worker = "low"

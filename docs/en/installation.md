@@ -2,6 +2,8 @@
 
 # Installation
 
+> v0.7.0 includes role overrides and migration. Live desktop dispatch trials were waived for this release, not passed. Preview enhancement upgrades with `upgrade --dry-run` and retain migration backups.
+
 ## Prerequisites
 
 - Python 3.11 or later. The runtime uses only the standard library.
@@ -53,6 +55,18 @@ python3 plugins/model-economy/scripts/model_economy.py configure --strong <stron
 
 You may also select a bundled profile through `configure --profile inherited` or `configure --profile openai-56`. Use `--force` only after reviewing a managed-file conflict.
 
+### v0.7.0: configure models and reasoning separately
+
+For example, keep model inheritance while choosing reasoning for the implementer:
+
+```sh
+python3 plugins/model-economy/scripts/model_economy.py configure --profile inherited --reasoning model-economy-implementer=medium
+```
+
+Fresh installations use high for architect/final-reviewer, medium for implementer/reviewer, and low for explorer/batch-worker. Inheriting the model does not inherit reasoning or guarantee a lighter model.
+
+With a complete explicit three-tier mapping, `--role-model` can override one role's model. See the [CLI reference](cli-reference.md) for role names, supported effort values, and argument rules. `configure` rebuilds settings from the selected base profile and resets overrides you do not supply. Use `upgrade` to retain existing installation settings.
+
 ## Verify and diagnose
 
 ```sh
@@ -74,6 +88,8 @@ python3 plugins/model-economy/scripts/model_economy.py disable-global-routing
 ```
 
 These commands manage only the Model Economy block in `$CODEX_HOME/AGENTS.md`. Enabling is idempotent; disabling restores the previous text outside the managed block. A project-level `AGENTS.md` can override the global instructions.
+
+For v0.7.0, the managed block includes visible-task authorization and compatibility rules. If global routing was already enabled, review the new rules and rerun `enable-global-routing` after installing the new version to refresh only that block. Ordinary `upgrade` does not rewrite it. Users who never enabled global routing do not need to add it.
 
 ## Coexisting with Superpowers
 
@@ -98,7 +114,37 @@ python3 plugins/model-economy/scripts/model_economy.py enable-global-routing
 
 After reinstalling the plugin, the current skills become discoverable in new tasks. The final command idempotently refreshes the managed global rule so its native default and strict handoff policy stay current. `--force` overwrites a conflicting managed file. Resolve the diff first whenever possible.
 
+### v0.7.0: migration and backups
+
+Config schema 1 remains readable; `status` and `verify` do not migrate the installation. A real `upgrade` writes schema 2 while preserving models and effective role reasoning after ownership checks. Imports of legacy profiles retain legacy reasoning defaults. State and status JSON remain at schema 1.
+
+Do not substitute another local `install` for migration: it refuses an existing managed schema 1 installation, including with `--force`. Run `upgrade` first; use `configure` only when you intentionally want to reset the profile.
+
+Review the schema, model, and reasoning differences from `upgrade --dry-run` before upgrading. Dry runs write nothing and create no backup. A real v1-to-v2 migration reports a unique backup directory:
+
+```text
+model-economy/backups/upgrade-<unique-id>/
+├── config.toml
+├── state.json
+├── agents/ (six original role files)
+└── manifest.json
+```
+
+Only these original managed artifacts are backed up. The manifest records relative names, pre-migration hashes, original permissions, and expected post-migration hashes; it contains no other user files. Backup failure leaves the installation unchanged. Transaction failure restores the original bytes and permissions. Uninstall and purge retain migration backups.
+
+For manual rollback:
+
+1. Pause tasks using this configuration and identify the backup for this migration.
+2. Compare the current eight managed artifacts with the manifest's post-migration hashes. If any differ, stop before overwriting and preserve and review later edits.
+3. Verify backup files against their pre-migration hashes. Reject missing files, links, or modified backups.
+4. During the maintenance window, restore all six roles, config, and state together, including recorded permissions. Do not merely change the schema number or restore a single file.
+5. Return to the plugin version matching the backup and run that version's `verify`. Do not resume enhanced mode until it passes.
+
+There is no automatic downgrade command. Do not use migration backups as cross-device profiles.
+
 ## Export and import a profile
+
+v0.7.0 exports schema 2 with role model overrides and complete reasoning; the receiving device needs v0.7.0+ tools. Export alone does not rewrite the installation. Profiles do not carry task, project, or local installation state.
 
 ```sh
 python3 plugins/model-economy/scripts/model_economy.py export-profile <path>

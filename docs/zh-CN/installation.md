@@ -2,6 +2,8 @@
 
 # 安装指南
 
+> v0.7.0 已纳入角色覆盖和迁移功能。真实桌面派发试点经批准跳过，不代表通过。增强模式升级前请先执行 `upgrade --dry-run` 预览，并保留迁移备份。
+
 ## 前置条件
 
 - Python 3.11 或更高版本；运行时只使用标准库。
@@ -53,6 +55,18 @@ python3 plugins/model-economy/scripts/model_economy.py configure --strong <stron
 
 也可以使用 `configure --profile inherited` 或 `configure --profile openai-56` 选择内置档案。只有在审阅过受管理文件冲突后才使用 `--force`。
 
+### v0.7.0：模型与推理强度分开配置
+
+例如保留模型继承，同时指定实现角色的推理强度：
+
+```sh
+python3 plugins/model-economy/scripts/model_economy.py configure --profile inherited --reasoning model-economy-implementer=medium
+```
+
+新安装默认：架构师和终审员 high，实现者和审查者 medium，探索者和批处理者 low。继承模型不代表继承推理强度，也不保证实际选择了更轻量模型。
+
+完整显式三档映射还可通过 `--role-model` 覆盖单个角色模型。角色名、合法强度及参数规则见 [CLI 参考](cli-reference.md)。`configure` 从所选基础档案重建配置；它会重设未显式保留的覆盖。需要保留旧安装设置时使用 `upgrade`。
+
 ## 验证与诊断
 
 ```sh
@@ -74,6 +88,8 @@ python3 plugins/model-economy/scripts/model_economy.py disable-global-routing
 ```
 
 这两个命令只管理 `$CODEX_HOME/AGENTS.md` 中的 Model Economy 块。启用可重复执行；禁用会保留受管理块以外的原有文本。项目级 `AGENTS.md` 可以覆盖全局说明。
+
+v0.7.0 更新了可见任务的授权与兼容说明。若之前已经启用全局路由，安装新版本后可审阅并再次运行 `enable-global-routing` 刷新该受管理区块；普通 `upgrade` 不自动改写它。没有启用过全局路由的用户不需要新增此配置。
 
 ## 与 Superpowers 共存
 
@@ -98,7 +114,37 @@ python3 plugins/model-economy/scripts/model_economy.py enable-global-routing
 
 重新安装插件后，当前版本的 Skill 会在新任务中可发现；最后一条命令会幂等刷新受管理全局规则，使原生默认和 strict 交权规则保持最新。`--force` 会覆盖冲突的受管理文件。通常应先处理差异。
 
+### v0.7.0：配置迁移与备份
+
+旧 schema 1 配置可以只读加载，`status` 与 `verify` 不会迁移安装。正式 `upgrade` 将配置写为 schema 2，保留原模型和经所有权检查的实际角色推理强度；旧档案导入保留旧推理默认。state 和 status JSON 仍为 schema 1。
+
+不要用重复运行本地 `install` 代替迁移：已有受管理 schema 1 安装会被拒绝，带 `--force` 也一样。请先 `upgrade`；只有明确想重设档案时才使用 `configure`。
+
+先审阅 `upgrade --dry-run` 的版本、模型与 reasoning 差异，再运行正式升级。干运行不写文件、不创建备份。正式 v1→v2 迁移会报告唯一备份目录，结构如下：
+
+```text
+model-economy/backups/upgrade-<唯一标识>/
+├── config.toml
+├── state.json
+├── agents/（六个原角色文件）
+└── manifest.json
+```
+
+备份仅包含上述原始受管理工件。manifest 保存相对名称、迁移前哈希、原权限以及预期迁移后哈希，不包含其他用户文件。备份失败时安装不变；写入事务失败时恢复原字节和权限。迁移备份在卸载及 purge 后保留。
+
+如需人工回退：
+
+1. 暂停会使用这份配置的任务，确认备份对应本次迁移。
+2. 对照 manifest 的迁移后哈希检查当前八个受管理工件。任一不一致时停止覆盖，先保留并核对后来修改的内容。
+3. 核对备份文件的迁移前哈希，拒绝缺失文件、链接或被修改的备份。
+4. 在维护窗口成套恢复六角色、config、state，并恢复记录的文件权限；不要只把 schema 数字改回 1，也不要只恢复一个文件。
+5. 切回与备份对应的插件版本，运行该版本的 `verify`。未通过前不继续使用增强模式。
+
+本版不提供自动降级命令。不要把迁移备份作为跨设备档案复制。
+
 ## 导出与导入档案
+
+v0.7.0 导出的 schema 2 档案保存角色模型覆盖与完整 reasoning；接收设备需使用 v0.7.0+。只导出不会改写原安装；档案不携带任务、项目和本机安装状态。
 
 ```sh
 python3 plugins/model-economy/scripts/model_economy.py export-profile <path>
