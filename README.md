@@ -2,23 +2,44 @@
 
 # Model Economy
 
-A division-of-labor guide for Codex. A tiny edit should not need a committee.
+A tiny edit should not need a committee.
 
-Model Economy is a free, open-source Codex plugin. It looks at the job and the risk, then guides model choice, role assignment, and checks. The aim is less unnecessary coordination, with serious attention where a mistake would hurt.
+A free, open-source Codex plugin that guides model choice, task assignment, and checks according to risk, with less unnecessary coordination.
 
-![Model Economy v0.7.0 task and model routing](assets/model-economy-flow-en.svg)
+- Keep small jobs in the current task; consider lighter models for fixed-rule batch work.
+- Set models and reasoning per role. Separate visible tasks need your authorization and host support.
+- Keep design and review gates for high-risk work. Less ceremony does not mean skipping checks.
 
-Changing a known setting? Do it in the current task and check it. Repeating a fixed edit across files? A lighter model may fit, if every result can be checked. Changing permissions or architecture? Keep the design and review gates. Less ceremony does not mean fewer useful checks.
+[Current release: v0.7.0](docs/release/0.7.0.md) · [Installation guide](docs/en/installation.md) · [Report an issue](https://github.com/BottleYo/model-economy/issues)
 
-v0.7.0 adds rules for visible sidebar tasks. With your authorization and host-tool support, suitable work can run in a separate task with a requested model and reasoning level. A follow-up fix goes back to the same task when possible; a new teammate should not need to read the entire office archive to change one line. The plugin does not add missing host tools or secretly switch the model in your current chat.
+<details>
+<summary>See the task-routing diagram</summary>
 
-Optional CodexBar integration shows token totals and estimated costs. There is no “install this and save half” promise. Savings need measurements, not a catchy percentage.
+![Model Economy task routing](assets/model-economy-flow-en.svg)
 
-The current stable release is **v0.7.0**. Automated checks passed; the maintainer waived live dispatch trials. Live creation, continuation, and complex parallel workflows remain unverified. See the [bilingual release notes](docs/release/0.7.0.md). This is a community project, not an official OpenAI product.
+</details>
+
+## Install
+
+Requires Git and a Codex CLI with plugin commands. Run in a terminal:
+
+```sh
+git clone https://github.com/BottleYo/model-economy.git
+cd model-economy
+codex plugin marketplace add .
+codex plugin add model-economy@model-economy-public
+```
+
+Start a new task and say “Use Model Economy for this task.” To skip it, say “This task must not use Model Economy.”
+
+This installs core mode; no six-role setup is required. See the [installation guide](docs/en/installation.md) for custom models, optional enhancement, usage summaries, and removal.
 
 ## Already installed? Ask Codex to update it
 
-Paste this into Codex on the computer you want to update. It is not pinned to a version, so you can reuse it next time. First identify the installation; no surprise remodeling of your settings.
+Copy the prompt below into Codex on the computer you want to update. No version number to maintain.
+
+<details>
+<summary>Copy the reusable update prompt</summary>
 
 ```text
 Update this computer's installed Model Economy to the latest stable GitHub release:
@@ -32,216 +53,17 @@ Do not read authentication or session files, run doctor --smoke, create test sub
 Verify the installed plugin snapshot and optional enhancement separately. Report versions, checks, backup locations, and anything unfinished; remind me to start a new task for the new rules. A source version reported by status does not prove the installed plugin snapshot was updated.
 ```
 
-## Why it exists
+</details>
 
-- A one-line fix should not automatically become a project ceremony.
-- A high-risk design should still receive strong architecture judgment and an independent final review.
-- The agent should have policy-level limits, not an open-ended invitation to spawn more agents or escalate models.
-- Completion should mean fresh evidence proportionate to the change, not merely a confident status message.
+## Before you use it
 
-## What makes it different
-
-| Constraint | What it changes in practice |
-| --- | --- |
-| Risk comes before routing | Every task is classified as simple, standard, mechanical, or large/high-risk before a role or model tier is selected. |
-| Strong calls have policy-level caps | Role slots are `0`, `1`, or `2` by class; execution requests are capped at `0`, `2`, or `4`, with at most two per allowed strong role. These are not platform quotas or identity verification. |
-| Roles have permissions | The strong architect and final reviewer are read-only. Implementation stays with `balanced`; fixed-rule batch edits may use `economy`. |
-| Orchestration is bounded | Internal agents and visible tasks share a root budget of three new contexts and six execution requests, with at most two concurrent by default. No recursive delegation or filling slots for small work. |
-| Quality gates scale with risk | Intent, approval, planning, testing, and completion evidence are native gates, but routine work does not inherit a full methodology. |
-| One workflow owns the task | Model Economy does not silently stack another orchestrator on top. A full Superpowers handoff requires explicit authorization for the current task. |
-
-Three optional leaf skills keep context work small: `domain-context` extracts only relevant business constraints, `module-design` checks boundaries and change surface, and `disposable-prototype` answers a concrete unknown with throwaway code. None of them starts subagents or takes over orchestration.
-
-## Model Economy vs full Superpowers
-
-[Superpowers](https://github.com/obra/superpowers) describes itself as a **complete software development methodology** with mandatory workflows for brainstorming, design approval, planning, worktrees, test-driven development, task execution, review, and branch completion. That coherent end-to-end process is useful when you want the full discipline on every eligible task. Model Economy targets a different default: apply only the process justified by the task's risk.
-
-| | Model Economy | Full Superpowers workflow |
-| --- | --- | --- |
-| Primary goal | Control capability, cost exposure, permissions, and evidence by risk | Apply a complete development methodology from intent through branch completion |
-| Default entry | Classify the task first; simple work can proceed directly | Begin with brainstorming and design clarification for building tasks |
-| Plans and tests | Scale to ambiguity and behavioral risk | Detailed plans and strict RED-GREEN-REFACTOR TDD are core workflow requirements |
-| Delegation | Internal and visible channels share the root budget; conditional and non-recursive | May assign a fresh subagent to each planned task with two-stage review |
-| Strong-model budget | Role slots `0` / `1` / `2`; execution requests `0` / `2` / `4`, at most two per role | No comparable capability-tier call cap is specified in the published workflow |
-| Best fit | Daily development where routine speed and high-risk rigor must coexist | Tasks where the user explicitly wants the complete methodology |
-| Coexistence | Owns the default route; hands off only on an explicit current-task request | Takes orchestration authority only after that explicit handoff |
-
-This is a workflow choice, not a claim that one tool is universally better. If you want full Superpowers for a task, say “full Superpowers” or “Superpowers strict mode”. Model Economy then supplies only capability and cost advice and does not add a second process.
-
-## How it works
-
-The v0.7.0 diagram above is a routing overview, not a checklist every task must march through.
-
-Tasks are classified in a fixed order: large or high-risk, mechanical, simple, then standard. The first match determines roles, strong role slots, and execution-request limits. See [how it works](docs/en/how-it-works.md) for the complete policy.
-
-The role names below describe healthy **enhanced mode**. In core mode, simple work stays with the main agent. Mechanical and standard work defaults there too, with visible implementation available only when explicitly authorized and supported by the host. High-risk compatibility gates remain.
-
-| Example | Enhanced-mode route |
-| --- | --- |
-| Known configuration key, known file, direct check | Simple: main agent, no subagent, `strong` maximum `0` |
-| Repeated edit with a fixed rule, bounded files, and per-item validation | Mechanical: `economy` batch worker, only when all five mechanical conditions hold |
-| Cross-module bug with a known product behavior | Standard: `balanced` implementation; explorer or reviewer only when their evidence is needed |
-| Authentication, permissions, new architecture, or wide blast radius | Large/high-risk: read-only architecture, balanced implementation, independent read-only final review; two strong role slots and at most four requests, two per role |
-
-## Core and enhanced modes
-
-Directory-style installation starts in **core mode**. All four skills work without user-level six-role files and retain native quality gates. A visible implementation channel does not turn core into enhanced mode or prove custom role isolation or independent model mapping.
-
-The repository CLI can add **enhanced mode**. It installs six local role definitions and an inherited or explicit three-tier model mapping. Only a complete, hash-matching, current enhancement is treated as enabled. Partial, modified, or outdated enhancement artifacts are reported as `degraded` and fail closed.
-
-For large/high-risk work in core mode, Model Economy reports that isolated architecture and final-review roles are unavailable. The user may install enhanced mode or explicitly approve a reduced-assurance single-agent path; that path is never described as the complete Model Economy high-risk workflow. Model and role identity remain unverified in both modes.
-
-### Visible tasks (v0.7.0)
-
-Execution preference can be `auto`, `visible-first`, or `current-only`, but preference is not creation authority. New sidebar tasks require an explicit user request or standing work-package creation authorization in user-confirmed, trusted project rules. Stricter current host-tool requirements still take precedence; project rules cannot bypass them. Do not split simple work. Reuse the original task for direct fixes, record model and reasoning separately, and never silently replace rejected choices.
-
-“All delegated work must be visible” includes implementation and review by default; narrow it only on an explicit implementation-only request. A read-only prompt is not a read-only sandbox. Missing mandatory high-risk review permissions must be reported and block the route. Root budgets count continuations and retries and do not reset on splits or model changes. See [how it works](docs/en/how-it-works.md).
-
-## Install
-
-```sh
-git clone https://github.com/BottleYo/model-economy.git
-cd model-economy
-codex plugin marketplace add .
-codex plugin add model-economy@model-economy-public
-```
-
-This is the formal repository installation path and provides core mode. Start a new task after installation. To add the optional six-role enhancement, use the default `inherited` profile:
-
-```sh
-python3 plugins/model-economy/scripts/model_economy.py install --profile inherited
-python3 plugins/model-economy/scripts/model_economy.py verify
-python3 plugins/model-economy/scripts/model_economy.py status
-```
-
-Use `py -3.11` in place of `python3` on Windows. Model profiles, global routing, CodexBar usage, upgrade, transfer, and uninstall are advanced options documented in [Installation](docs/en/installation.md) and the [CLI reference](docs/en/cli-reference.md).
-
-## First experience
-
-Try one prompt from each risk level and compare the route with the expectation:
-
-| Prompt | Expected core-mode route |
-| --- | --- |
-| “Change the known timeout constant from 20 to 30 and run its direct test.” | Simple: main agent, direct verification, no custom role. |
-| “Fix this reproducible bug across the parser and renderer, then run focused and regression tests.” | Standard: main agent, short plan and risk-scaled quality gates. |
-| “Redesign authentication and migrate existing permissions.” | Large/high-risk: report missing isolated architect/final reviewer and stop for the user’s choice. |
-
-Check the mode with `model_economy.py status --format text|json`. To stop using the plugin for one task, say `This task must not use Model Economy.` To remove enhanced mode while keeping the plugin, run `uninstall`; use `uninstall --purge` to remove its local config and state as well.
-
-## Use it on your terms
-
-Model Economy is controllable at the task, project, global-routing, and plugin levels.
-
-| Scope | How to control it |
-| --- | --- |
-| Use for one task | Say: `Use Model Economy for this task.` |
-| Skip for one task | Say: `This task must not use Model Economy.` |
-| Project policy | Add the desired rule to the project's `AGENTS.md`; project instructions override the global rule. |
-| Global default | Use `enable-global-routing` or `disable-global-routing` below. |
-| Installed plugin | In Codex Desktop, open **Plugins → Installed → Model Economy** and toggle it. Start a new task after changing the toggle. |
-
-Enable the global default from the repository root:
-
-```sh
-python3 plugins/model-economy/scripts/model_economy.py enable-global-routing
-```
-
-Disable it without removing the plugin:
-
-```sh
-python3 plugins/model-economy/scripts/model_economy.py disable-global-routing
-```
-
-The plugin toggle and the global `$CODEX_HOME/AGENTS.md` routing block are independent. To stop Model Economy completely, disable global routing, turn off the installed plugin, and start a new task. To keep the plugin available but opt out occasionally, the one-task instruction is enough.
-
-### View usage
-
-With CodexBar 0.41.0 or later installed, view local Codex usage without exposing account credentials:
-
-```sh
-python3 plugins/model-economy/scripts/model_economy.py usage
-python3 plugins/model-economy/scripts/model_economy.py usage --days 7 --project .
-python3 plugins/model-economy/scripts/model_economy.py usage --format json
-```
-
-The adapter reports CodexBar's local token totals, model breakdowns, and estimated cost. It does not attribute tokens to Model Economy roles.
-
-## Task classification
-
-| Class | Conditions | Enhanced-mode default capability | Strong slots / execution requests |
-| --- | --- | --- | --- |
-| Large or high-risk | Any high-risk boundary, new architecture, or wide blast radius | `strong` gates plus `balanced` implementation | 2 / 4 |
-| Mechanical | All five fixed-rule conditions hold | `economy` batch work | 0 / 0 |
-| Simple | Known files, no open judgment, direct verification, and no creative or behavioral change | Main agent | 0 / 0 |
-| Standard | The fallback class | `balanced` | 1 / 2 |
-
-## Enhanced-mode roles
-
-| Role | Capability | Access | Responsibility |
-| --- | --- | --- | --- |
-| `model-economy-architect` | `strong` | Read only | Architecture boundaries, risks, and decisions before high-risk design approval |
-| `model-economy-final-reviewer` | `strong` | Read only | Findings, evidence gaps, and residual risk after high-risk verification |
-| `model-economy-implementer` | `balanced` | Workspace write | Approved implementation, tests, and verification |
-| `model-economy-reviewer` | `balanced` | Read only | Independent findings and regression risks |
-| `model-economy-explorer` | `economy` | Read only | Minimal file inventory and facts |
-| `model-economy-batch-worker` | `economy` | Workspace write | Fixed-rule edits with per-item checks |
-
-## Lightweight engineering skills
-
-The plugin includes three independently triggered leaf skills:
-
-- `domain-context` extracts only the domain vocabulary, invariants, and ADR constraints needed by the current task.
-- `module-design` checks module boundaries, knowledge leakage, and change surface, then suggests the smallest structural improvement.
-- `disposable-prototype` answers a concrete unknown with an isolated throwaway experiment instead of treating exploratory code as production work.
-
-These skills start no subagents, do not change task classification, model mapping, the six-role topology, or quality gates, and never commit on their own. Production implementation returns to `cost-aware-development` routing. They are built into the plugin and add no dependency on an external engineering-method plugin.
-
-## Global routing
-
-`enable-global-routing` adds the generic development-routing policy to `$CODEX_HOME/AGENTS.md`. The command is idempotent and changes only the marked, managed Model Economy block. A project's own `AGENTS.md` can override the global rule. `disable-global-routing` removes only that managed block.
-
-## Security and trust boundaries
-
-The local CLI manages only its configuration, its declared agent files under `CODEX_HOME`, and the marked, managed Model Economy block in `$CODEX_HOME/AGENTS.md`. It fails closed on missing, damaged, or conflicting managed state. Only an explicit user-authorized `--force` operation overrides the relevant ownership or conflict guard. It does not manage credentials, project data, unowned files, other plugins, or access control for `CODEX_HOME`.
-
-Plain `doctor` verifies managed local files and checks `codex --version`; it does not invoke the broader `codex doctor`, inspect authentication, or scan session and database artifacts. `doctor --smoke` is a separate explicit opt-in that starts an ephemeral authenticated Codex run and may consume usage.
-
-`doctor --smoke` can observe whether a subagent starts. Current Codex JSONL does not provide `agent_type`, so role identity and model identity remain unverified. Read [Security](SECURITY.md) before reporting a vulnerability.
+- These are workflow rules, not a platform-enforced scheduler. The plugin does not switch your current chat's model or promise fixed token savings.
+- Core mode pauses for your choice when high-risk work needs isolated roles that are unavailable.
+- v0.7.0 automated checks passed. Live visible-task creation, continuation, and complex parallel trials were waived and remain unverified.
+- A community project, not an official OpenAI product.
 
 ## Documentation
 
-- [Installation](docs/en/installation.md): prerequisites, install, upgrade, profile transfer, and uninstall.
-- [How it works](docs/en/how-it-works.md): classification, role boundaries, approval gates, and limits.
-- [CLI reference](docs/en/cli-reference.md): commands, options, and exit codes.
-- [Security policy](SECURITY.md): private vulnerability reporting and release checks.
-- [Changelog](CHANGELOG.md): released changes.
-- [Project website](https://bottleyo.github.io/model-economy/), [Support](SUPPORT.md), [Contributing](CONTRIBUTING.md), and [Roadmap](ROADMAP.md).
+[How it works](docs/en/how-it-works.md) · [CLI reference](docs/en/cli-reference.md) · [Security](SECURITY.md) · [Changelog](CHANGELOG.md) · [Contributing](CONTRIBUTING.md) · [Support](SUPPORT.md)
 
-## Current limitations
-
-- Usage summaries come from optional CodexBar local statistics; Model Economy does not scan sessions itself or attribute tokens to roles.
-- `doctor --smoke` does not verify role or model identity.
-- The plugin does not install, toggle, or modify Superpowers; it hands off orchestration only after explicit strict authorization for the current task.
-- Global routing does not include project-specific context and is not removed automatically by plugin uninstall.
-- The GitHub Pages site is static and uses no telemetry, cookies, or external fonts; this repository is a community open-source project, not an official OpenAI product.
-
-## Contributing
-
-Run the local checks before opening a change:
-
-```sh
-python3 -m unittest discover -s tests -v
-python3 scripts/check_sensitive_content.py .
-```
-
-For a custom model mapping, pass all three capability tiers on one line:
-
-```sh
-# 3. custom
-python3 plugins/model-economy/scripts/model_economy.py configure --strong <strong-model> --balanced <balanced-model> --economy <economy-model>
-py -3.11 plugins/model-economy/scripts/model_economy.py configure --strong <strong-model> --balanced <balanced-model> --economy <economy-model>
-```
-
-## License
-
-[MIT](LICENSE)
+[MIT license](LICENSE)
