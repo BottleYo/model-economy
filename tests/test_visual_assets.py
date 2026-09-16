@@ -104,12 +104,14 @@ class VisualAssetTests(unittest.TestCase):
         english = (ROOT / SVG_ASSETS[0]).read_text(encoding="utf-8")
         chinese = (ROOT / SVG_ASSETS[1]).read_text(encoding="utf-8")
 
-        self.assertIn("AFTER 2 FAILURES · DIAGNOSTIC ×1", english)
-        self.assertIn("两次失败后 · 仅诊断 1 次", chinese)
+        self.assertIn("Evidence can trigger diagnosis", english)
+        self.assertIn("有具体能力不匹配可提早诊断", chinese)
+        self.assertIn("3 new contexts / 6 execution requests", english)
+        self.assertIn("3 个新执行上下文 / 6 次执行请求", chinese)
+        self.assertIn("remain unverified", english)
+        self.assertIn("尚未实测", chinese)
 
     def test_flow_card_labels_stay_inside_declared_bounds(self):
-        required_labels = {"ARCHITECT", "IMPLEMENT"}
-
         for relative_path in SVG_ASSETS:
             with self.subTest(path=relative_path):
                 root = ET.parse(ROOT / relative_path).getroot()
@@ -128,8 +130,13 @@ class VisualAssetTests(unittest.TestCase):
                     self.assertLessEqual(left + width, right, text)
 
                 self.assertTrue(fitted_labels)
-                if relative_path.endswith("-en.svg"):
-                    self.assertTrue(required_labels <= fitted_labels)
+
+    def test_routing_overview_is_reproducible(self):
+        with tempfile.TemporaryDirectory() as directory:
+            subprocess.run([sys.executable, str(ROOT / "scripts/render_routing_overview.py"), "--output-dir", directory], check=True)
+            for language in ("en", "zh-CN"):
+                name = f"model-economy-flow-{language}.svg"
+                self.assertEqual((Path(directory) / name).read_bytes(), (ROOT / "assets" / name).read_bytes())
 
     def test_social_preview_is_a_compact_1280_by_640_png(self):
         self.assertTrue(PNG_ASSET.is_file())
